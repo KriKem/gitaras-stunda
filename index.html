@@ -3,109 +3,1164 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ģitāras stunda</title>
 <meta name="theme-color" content="#0C0907">
-<title>Ģitāras skaņotājs</title>
+<meta name="description" content="Personīgs ģitāras treniņu plānotājs ar rīkiem un skaņotāju.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,600;7..72,700&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,600;7..72,700&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap">
 <style>
+/* Layout: one dark "boutique amp room" look. The photos set the mood at the top of Today and behind the session;
+   everything else is quiet warm-black panels with brass details. Colour stays reserved for the five practice blocks. */
 :root{
   color-scheme:dark;
-  --bg:#0C0907; --panel:#17110D; --raised:#211913; --well:#100B08; --line:#33281F; --ink:#F2E4CF; --muted:#A8937D; --on-ink:#170F08;
-  --brass:#E2A64F; --brass-hi:#F6CF86; --brass-lo:#A86F25; --glow:rgb(255 168 72 / .45); --good:#6CE09A; --good-glow:rgb(108 224 154 / .55); --blue:#7FA4FF;
-  --f-display:'Literata',Georgia,serif; --f-body:'Instrument Sans','Segoe UI',system-ui,sans-serif; --f-mono:'DM Mono',ui-monospace,Menlo,monospace;
+  --bg:#0C0907; --surface:#17110D; --raised:#211913; --well:#100B08; --sunken:#2A2019; --ink:#F2E4CF; --muted:#A8937D; --line:#33281F; --on-ink:#170F08;
+  --brass:#E2A64F; --brass-hi:#F6CF86; --brass-lo:#A86F25; --glow:rgb(255 168 72 / .45); --tube-blue:#7FA4FF;
+  --panel-hi:#1E1712; --panel-lo:#140F0B;
+  --c-tech:#4F86E8; --c-fret:#DB6A2E; --c-theory:#18A08A; --c-rep:#8D72E6; --c-comp:#C08525;
+  --good:#6CC98F; --bad:#F07A62;
+  --fb-fret:#C9C1B3; --fb-string:#DDD6CA; --fb-wound:#C9B48F; --fb-inlay:#E9E1D2; --fb-nut:#EDE3CF;
+  --fb-dot:#F1E7D6; --fb-dot-ink:#1A120C; --fb-root:#F5B547; --fb-third:#5FD4C0; --fb-fifth:#F58BB8; --fb-seventh:#B3A2FF; --fb-char:#7FA4FF;--fb-ext:#A6DB7E;--fb-ok:#6BE09A; --fb-bad:#FF8E7A;
+  --f-display:'Literata',Georgia,'Times New Roman',serif;
+  --f-body:'Instrument Sans','Segoe UI',system-ui,-apple-system,sans-serif;
+  --f-mono:'DM Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%}
-body{background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--f-body);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
-body::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgb(12 9 7 / .72),rgb(12 9 7 / .93) 55%,rgb(12 9 7 / .98)),url(tubes.webp) center 30%/cover no-repeat}
-button,select{font:inherit;color:inherit}
+html,body{min-height:100%}
+body{background:radial-gradient(120% 50% at 50% -8%,rgb(255 160 70 / .06),transparent 60%) no-repeat,var(--bg);color:var(--ink);font:400 15px/1.5 var(--f-body);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+body.in-session{overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
+h1,h2,h3,p,ul,ol{margin:0}
+ul,ol{padding:0;list-style:none}
 :focus-visible{outline:2px solid var(--brass);outline-offset:2px}
-.app{max-width:560px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:18px}
-header{display:flex;align-items:center;gap:11px}
-header img{width:34px;height:34px;border-radius:9px}
-header h1{margin:0;font:600 21px/1 var(--f-display)}
-.card{background:linear-gradient(180deg,#1E1712,#140F0B);border:1px solid var(--line);border-radius:22px;padding:18px}
-.readout{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
-.note{font:700 112px/1 var(--f-display);color:var(--brass-hi);text-shadow:0 0 30px var(--glow);letter-spacing:-.03em;min-height:112px;transition:opacity .3s}
-.note sub{font-size:30px;color:var(--muted);text-shadow:none;margin-left:4px;vertical-align:baseline}
-.note.idle{opacity:.35}
-.hz{font:500 14px/1 var(--f-mono);color:var(--muted)}
-.meter{width:100%;display:block}
-.meter .tick{stroke:var(--muted);stroke-width:1.5;opacity:.7}
-.meter .tick.major{stroke-width:2.2;opacity:1}
-.meter text{fill:var(--muted);font:500 11px var(--f-mono);text-anchor:middle}
-.needle{transform-origin:160px 168px;transition:transform .12s linear}
-.needle line{stroke:var(--brass-hi);stroke-width:3;stroke-linecap:round;filter:drop-shadow(0 0 4px var(--glow))}
-.state{display:flex;align-items:center;justify-content:center;gap:12px;min-height:36px}
-.lamp{width:18px;height:18px;border-radius:50%;background:#2A1E14;border:1px solid #3A2C20;transition:background .2s,box-shadow .2s}
-.lamp.on{background:radial-gradient(circle at 50% 40%,#E6FFEF,var(--good) 58%,#1E7A47);border-color:var(--good);box-shadow:0 0 14px 4px var(--good-glow)}
-.cents{font:500 24px/1 var(--f-mono);min-width:96px;text-align:center}
-.hint{font-weight:600;color:var(--muted);min-width:120px}
-.hint.ok{color:var(--good)}
-.strings{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
-.strings button{border:1px solid var(--line);background:var(--raised);border-radius:12px;padding:8px 0;display:flex;flex-direction:column;align-items:center;gap:2px;font:600 18px/1.1 var(--f-display)}
-.strings button small{font:500 10px/1 var(--f-mono);color:var(--muted)}
-.strings button.near{border-color:var(--brass);box-shadow:0 0 12px -3px var(--glow)}
-.strings button[aria-pressed="true"]{background:linear-gradient(180deg,var(--brass-hi),var(--brass-lo));color:var(--on-ink);border-color:var(--brass-lo)}
-.strings button[aria-pressed="true"] small{color:var(--on-ink)}
+.app{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:10px 104px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:6px 14px}
+.brand{display:flex;align-items:center;gap:11px;font:600 21px/1 var(--f-display);letter-spacing:-.01em}
+.brand img{width:34px;height:34px;border-radius:9px;flex:none}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;background:rgb(14 10 8 / .94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
+.tabs button{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;padding:6px 2px;border-radius:12px;font:500 11px/1.2 var(--f-body);color:var(--muted)}
+.tabs button[aria-current="page"]{color:var(--brass-hi);font-weight:600}
+.tabs svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+h2{font:600 26px/1.15 var(--f-display);letter-spacing:-.01em;text-wrap:balance}
+h3{font:600 18px/1.25 var(--f-display);letter-spacing:-.005em}
+.eyebrow{font:600 11px/1.2 var(--f-body);letter-spacing:.16em;text-transform:uppercase;color:var(--brass)}
+.lede,.muted{color:var(--muted)}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.card{background:linear-gradient(180deg,var(--panel-hi),var(--panel-lo));border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:inset 0 1px 0 rgb(255 230 190 / .05)}
+.stack-v{display:flex;flex-direction:column;gap:16px}
 .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.spread{justify-content:space-between}
-.btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--raised);font-weight:600;font-size:14px}
-.btn.solid{background:linear-gradient(180deg,var(--brass-hi),var(--brass) 48%,var(--brass-lo));color:var(--on-ink);border-color:var(--brass-lo);box-shadow:0 8px 24px -10px var(--glow)}
-.btn.lg{min-height:54px;width:100%;font-size:16px}
-select{background:var(--well);border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:14px}
-.ref{display:flex;align-items:center;gap:6px;font:500 13px var(--f-mono);color:var(--muted)}
-.ref button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--raised);font:500 14px var(--f-mono)}
-.level{height:4px;border-radius:2px;background:var(--well);overflow:hidden}
-.level i{display:block;height:100%;width:0;background:var(--brass);transition:width .08s}
-.muted{color:var(--muted);font-size:13px;margin:0}
-.err{color:#F07A62;font-size:14px;margin:0}
-[hidden]{display:none!important}
-@media (prefers-reduced-motion:reduce){.needle,.lamp,.level i,.note{transition:none}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--raised);font-weight:600;font-size:14px;line-height:1.2;white-space:nowrap;color:var(--ink)}
+.btn:hover{border-color:var(--brass-lo)}
+.btn.solid{background:linear-gradient(180deg,var(--brass-hi),var(--brass) 48%,var(--brass-lo));color:var(--on-ink);border-color:var(--brass-lo);box-shadow:inset 0 1px 0 rgb(255 240 210 / .5),0 8px 24px -10px var(--glow)}
+.btn.solid:hover{filter:brightness(1.06)}
+.btn.sm{min-height:34px;padding:6px 13px;font-size:13px}
+.btn.lg{min-height:52px;padding:12px 24px;font-size:16px;width:100%}
+.btn.ghost{border-color:transparent;background:none;color:var(--muted)}
+.btn.ghost:hover{color:var(--brass-hi)}
+.btn.danger{color:var(--bad)}
+.btn[disabled]{opacity:.45;cursor:default}
+.seg{display:inline-flex;background:var(--well);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px;max-width:100%;overflow-x:auto}
+.seg button{border:0;background:none;padding:7px 14px;border-radius:999px;font-weight:600;font-size:13px;color:var(--muted);white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--raised);color:var(--brass-hi);box-shadow:inset 0 0 0 1px var(--line)}
+.field{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:500;color:var(--muted);min-width:0}
+.field input,.field textarea,.field select,select.sel{background:var(--well);border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:15px;color:var(--ink);font-weight:400;min-width:0;width:100%}
+select.sel{width:auto;max-width:100%}
+.field textarea{min-height:76px;resize:vertical}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:999px;background:var(--raised);border:1px solid var(--line);font-size:12px;font-weight:600}
+.chip::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--c,var(--muted))}
+.chip.plain::before{display:none}
+
+/* Today */
+.hero{position:relative;isolation:isolate;overflow:hidden;margin-inline:-16px;min-height:min(176vw,820px);padding:14px 16px 22px;display:flex;flex-direction:column;justify-content:space-between;gap:16px}
+.hero .bgimg{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;object-position:60% 100%}
+.hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgb(12 9 7 / .6) 0%,rgb(12 9 7 / .05) 38%,rgb(12 9 7 / .05) 52%,rgb(12 9 7 / .82) 78%,var(--bg) 100%)}
+.hero-main{display:flex;flex-direction:column;align-items:center;gap:8px}
+.hero-side{display:flex;flex-direction:column;gap:16px}
+.ringwrap{position:relative;width:min(232px,60vw);aspect-ratio:1}
+.ring{width:100%;height:100%;display:block}
+.ringmid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;pointer-events:none}
+.ringmid .big{font:700 66px/0.9 var(--f-display);letter-spacing:-.03em;font-variant-numeric:tabular-nums;text-shadow:0 0 28px var(--glow)}
+.ringmid .of{font-size:13px;color:var(--muted)}
+.herostats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.herostats b{display:block;font:600 26px/1.1 var(--f-display);font-variant-numeric:tabular-nums}
+.herostats span{font-size:12px;color:var(--muted)}
+.today-body{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;margin-top:6px}
+.week{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+.week-bars{position:relative;height:96px;display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;border-bottom:1px solid var(--line)}
+.week-goal{position:absolute;left:0;right:0;border-top:1px dashed var(--brass-lo);opacity:.8;pointer-events:none}
+.week-goal span{position:absolute;right:0;top:-15px;font:400 10px/1 var(--f-mono);color:var(--muted)}
+.wstack{height:100%;display:flex;flex-direction:column-reverse;justify-content:flex-start;gap:2px;max-width:24px;width:100%;margin-inline:auto}
+.wstack i{display:block;min-height:2px}
+.wstack i:last-child{border-radius:4px 4px 0 0}
+.week-lab{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;text-align:center;font-size:11px;color:var(--muted)}
+.week-lab .is-today{color:var(--brass-hi);font-weight:600}
+.plan-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.blocks{display:flex;flex-direction:column}
+.blk{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:14px;align-items:center;padding-block:14px;border-top:1px solid var(--line)}
+.blk:last-child{border-bottom:1px solid var(--line)}
+.blk-ico{width:48px;height:48px;border-radius:12px;display:block}
+.blk-head{display:flex;align-items:center;gap:8px;font-size:13px}
+.blk-head .dot{width:8px;height:8px;border-radius:50%;background:var(--c);flex:none}
+.blk-name{font-weight:600;color:var(--muted)}
+.blk-min{color:var(--muted);font-family:var(--f-mono);font-size:12px;margin-left:auto}
+.blk-ex{font:600 17px/1.3 var(--f-display);margin-block:3px 8px;overflow-wrap:anywhere}
+.bar{height:4px;border-radius:2px;background:var(--sunken);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--c);border-radius:2px;box-shadow:0 0 8px var(--c)}
+.blk-act{display:flex;gap:6px;flex-direction:column}
+.blk.done .blk-min{color:var(--good)}
+
+/* Session */
+.session{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-x:hidden;overflow-y:auto;padding:calc(10px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px))}
+.session::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,rgb(12 9 7 / .66),rgb(12 9 7 / .9) 55%,rgb(12 9 7 / .96)),url(img/tubes.webp) center 30% / cover no-repeat}
+.s-inner{position:relative;z-index:1;max-width:1000px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+.s-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.s-chip{padding:4px 12px 4px 4px;font-size:13px}
+.s-chip::before{display:none}
+.s-chip img{width:26px;height:26px;border-radius:7px}
+.s-prog{height:4px;background:var(--sunken);border-radius:2px;overflow:hidden}
+.s-prog i{display:block;height:100%;background:var(--c);width:0;box-shadow:0 0 10px var(--c)}
+.s-timer{text-align:center;padding-top:8px}
+.s-time{font:500 clamp(58px,19vw,96px)/1 var(--f-mono);letter-spacing:-.04em;font-variant-numeric:tabular-nums;color:var(--brass-hi);text-shadow:0 0 22px var(--glow),0 0 3px rgb(255 200 120 / .6)}
+.s-sub{color:var(--muted);font-size:13px;margin-top:6px}
+.s-ctl{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
+.s-ctl .btn{min-height:50px;font-size:15px}
+.how{display:flex;flex-direction:column;gap:8px;counter-reset:how;margin-top:10px}
+.how li{counter-increment:how;display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;max-width:62ch}
+.how li::before{content:counter(how);font:500 12px/1.9 var(--f-mono);color:var(--brass)}
+.note{background:rgb(33 25 19 / .8);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px}
+.bpmlog{display:flex;flex-direction:column;gap:8px}
+.bpmlog .val{font:500 22px/1 var(--f-mono);color:var(--brass-hi)}
+.s-side{display:flex;flex-direction:column;gap:16px;min-width:0}
+.s-main{display:flex;flex-direction:column;gap:18px;min-width:0}
+
+/* Metronome */
+.metro{display:flex;flex-direction:column;gap:16px}
+.m-head{display:grid;grid-template-columns:118px minmax(0,1fr);gap:16px;align-items:center}
+.knob{width:118px;height:118px;touch-action:none;cursor:ns-resize;border-radius:50%;user-select:none;-webkit-user-select:none}
+.knob svg{width:100%;height:100%;display:block}
+.m-read{display:flex;flex-direction:column;gap:10px;min-width:0}
+.m-bpm{display:flex;align-items:baseline;gap:8px}
+.m-bpm b{font:500 50px/1 var(--f-mono);letter-spacing:-.04em;font-variant-numeric:tabular-nums;color:var(--brass-hi);text-shadow:0 0 16px var(--glow)}
+.m-bpm small{font-size:11px;letter-spacing:.14em;color:var(--muted)}
+.m-steps{display:flex;gap:6px;flex-wrap:wrap}
+.m-step{width:42px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--raised);font:500 13px/1 var(--f-mono)}
+.m-step:hover{border-color:var(--brass-lo)}
+.m-bot{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.m-dots{display:flex;gap:8px;margin-right:auto}
+.m-dots i{width:15px;height:15px;border-radius:50%;background:#2A1E14;border:1px solid #3A2C20}
+.m-dots i.hit{background:radial-gradient(circle at 50% 40%,#FFE3AE,#F29A3A 58%,#9A4E12);border-color:#F2A54A;box-shadow:0 0 12px 3px var(--glow)}
+.m-dots i:first-child.hit{background:radial-gradient(circle at 50% 40%,#E3EBFF,#7FA4FF 58%,#2E4FA8);border-color:#9DB8FF;box-shadow:0 0 12px 3px rgb(127 164 255 / .5)}
+.m-vol{display:grid;grid-template-columns:auto minmax(0,1fr) 46px;gap:12px;align-items:center;font-size:13px;color:var(--muted)}
+.m-vol input{width:100%;accent-color:var(--brass)}
+.m-vol .num{text-align:right;font-size:12px}
+
+/* Fretboard */
+.fbwrap{overflow-x:auto;border-radius:10px;padding-bottom:2px}
+.fb{width:100%;height:auto;display:block}
+.fb .lab{fill:var(--muted);font:500 10px var(--f-mono)}
+.fb .d circle{fill:var(--fb-dot)}
+.fb .d text{fill:var(--fb-dot-ink);font:700 10.5px var(--f-body);text-anchor:middle}
+.fb .d-root circle,.fb .d-q circle{fill:var(--fb-root);filter:drop-shadow(0 0 4px rgb(245 181 71 / .75))}
+.fb .d-third circle{fill:var(--fb-third)}
+.fb .d-ghost circle{fill:rgb(12 9 7 / .55);stroke:var(--fb-dot);stroke-width:1.5;stroke-dasharray:3 2.2}
+.fb .d-ghost text{fill:var(--fb-dot);opacity:.85}
+.legend i.lg-ghost{background:none;border:1.5px dashed var(--fb-dot);box-sizing:border-box}
+.fb .d-ext circle{fill:var(--fb-ext)}
+.fb .d-char circle{fill:var(--fb-char);filter:drop-shadow(0 0 5px rgb(127 164 255 / .8))}
+.spell span.char{border-color:var(--fb-char);box-shadow:0 0 10px -3px rgb(127 164 255 / .8)}
+.spell span.char small{color:var(--fb-char)}
+.fb .d-fifth circle{fill:var(--fb-fifth)}
+.fb .d-seventh circle{fill:var(--fb-seventh)}
+.fb .d-ok circle{fill:var(--fb-ok);filter:drop-shadow(0 0 4px rgb(107 224 154 / .7))}
+.fb .d-bad circle{fill:var(--fb-bad)}
+.fb .hit{fill:transparent;cursor:pointer}
+.fb .hit:hover{fill:rgb(255 240 220 / .08)}
+.fb .mute{fill:var(--muted);font:600 14px var(--f-body);text-anchor:middle}
+.fb .shape{fill:none;stroke:var(--fb-dot);stroke-width:2;opacity:.45;stroke-linejoin:round}
+
+/* Trainer + map */
+.opts{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+.strs{display:inline-flex;gap:4px}
+.strs button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--raised);font:500 13px/1 var(--f-mono);color:var(--muted)}
+.strs button[aria-pressed="true"]{background:linear-gradient(180deg,var(--brass-hi),var(--brass-lo));color:var(--on-ink);border-color:var(--brass-lo)}
+.tr-q{font:600 21px/1.25 var(--f-display);min-height:50px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tr-q .ok{color:var(--good)} .tr-q .bad{color:var(--bad)}
+.tr-big{font:700 88px/1 var(--f-display);letter-spacing:-.03em;text-align:center;color:var(--brass-hi);text-shadow:0 0 30px var(--glow)}
+.tr-ans{display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:6px}
+.tr-ans button{min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--raised);font-weight:600;font-size:14px}
+.tr-ans button:hover{border-color:var(--brass-lo);color:var(--brass-hi)}
+.tr-score{font-size:13px;color:var(--muted)}
+.spell{display:flex;flex-wrap:wrap;gap:6px}
+.spell span{display:flex;flex-direction:column;align-items:center;min-width:42px;padding:6px 8px;border-radius:10px;background:var(--raised);border:1px solid var(--line);font-weight:600}
+.spell small{font:400 11px/1.3 var(--f-mono);color:var(--brass)}
+.shapes{display:flex;flex-direction:column;gap:4px;font-size:13px}
+.shapes b{font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+
+@media (max-width:879px){.toolseg{display:grid;grid-template-columns:1fr 1fr;border-radius:18px;width:100%}.toolseg button{border-radius:14px}.toolseg button:last-child:nth-child(odd){grid-column:1/-1}}
+/* Circle of fifths */
+.cf{display:grid;grid-template-columns:minmax(0,1fr);gap:22px}
+.cf-svg{width:100%;max-width:440px;display:block}
+.cs path{fill:var(--well);stroke:var(--bg);stroke-width:2;cursor:pointer}
+.cs:hover path{filter:brightness(1.35)}
+.cs text{fill:var(--muted);font:600 15px var(--f-display);text-anchor:middle;pointer-events:none}
+.cs-i text{font-size:12.5px}
+.cs text.rn{font:500 9.5px var(--f-mono)}
+.cs-dia path{fill:color-mix(in srgb,var(--brass) 22%,var(--well))}
+.cs-dia text{fill:var(--ink)} .cs-dia text.rn{fill:var(--brass-hi)}
+.cs-tonic path{fill:var(--brass)} .cs-tonic text{fill:var(--on-ink)}
+.cs-char path{fill:color-mix(in srgb,var(--tube-blue) 42%,var(--well))}
+.cs-char text{fill:#E3EBFF} .cs-char text.rn{fill:#C9D7FF}
+.cf-svg.sev .cs-o text{font-size:13px} .cf-svg.sev .cs-i text{font-size:10.5px} .cf-svg.sev text.rn{font-size:8.5px}
+.cs path{transition:fill .35s}
+.cf-bright{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+.cf-lamps{display:flex;gap:6px}
+.cf-lamps i{width:12px;height:12px;border-radius:50%;background:#2A1E14;border:1px solid #3A2C20}
+.cf-lamps i.on{background:radial-gradient(circle at 50% 40%,#FFE3AE,#F29A3A 58%,#9A4E12);border-color:#F2A54A;box-shadow:0 0 8px 2px var(--glow)}
+.cchip.char{border-color:var(--tube-blue)} .cchip.char small{color:var(--tube-blue)}
+.cs-col path{fill:color-mix(in srgb,var(--tube-blue) 16%,var(--well))}
+.cs-col text{fill:#C9D7FF} .cs-col text.rn{fill:var(--tube-blue)}
+.cs.sel path{stroke:var(--brass-hi);stroke-width:3}
+.cf-c1{fill:var(--brass-hi);font:700 30px var(--f-display)}
+.cf-c2{fill:var(--ink);font:500 13px var(--f-body)}
+.cf-c3{fill:var(--muted);font:500 11px var(--f-mono)}
+.cf-big{font:700 34px/1 var(--f-display);color:var(--brass-hi)}
+.cchips{display:flex;flex-wrap:wrap;gap:6px}
+.vchips{display:flex;flex-wrap:wrap;gap:6px}
+.vchips .btn[aria-pressed="true"]{border-color:var(--brass);color:var(--brass-hi)}
+.cchip{display:inline-flex;flex-direction:column;align-items:center;min-width:52px;padding:6px 10px;border-radius:12px;border:1px solid var(--line);background:var(--raised);font:600 15px/1.2 var(--f-display);color:var(--ink)}
+.cchip small{font:500 10px/1.3 var(--f-mono);color:var(--brass)}
+button.cchip:hover{border-color:var(--brass-lo)}
+.cchip.out{border-style:dashed;opacity:.85} .cchip.out small{color:var(--muted)}
+.cchip.col{border-color:rgb(127 164 255 / .45)} .cchip.col small{color:var(--tube-blue)}
+.cchip.now{border-color:var(--brass-hi);box-shadow:0 0 14px -2px var(--glow)}
+
+/* Tuner */
+.tu{max-width:560px}
+.tu-read{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.tu-note{font:700 112px/1 var(--f-display);color:var(--brass-hi);text-shadow:0 0 30px var(--glow);letter-spacing:-.03em;min-height:112px;transition:opacity .3s}
+.tu-note sub{font-size:30px;color:var(--muted);text-shadow:none;margin-left:4px;vertical-align:baseline}
+.tu-note.idle{opacity:.35}
+.tu-hz{font:500 14px/1 var(--f-mono);color:var(--muted)}
+.tu-meter{width:100%;display:block}
+.tu-meter .tu-tick{stroke:var(--muted);stroke-width:1.5;opacity:.7}
+.tu-meter .tu-tick.major{stroke-width:2.2;opacity:1}
+.tu-meter text{fill:var(--muted);font:500 11px var(--f-mono);text-anchor:middle}
+.tu-needle{transform-origin:160px 168px;transition:transform .12s linear}
+.tu-needle line{stroke:var(--brass-hi);stroke-width:3;stroke-linecap:round;filter:drop-shadow(0 0 4px var(--glow))}
+.tu-state{display:flex;align-items:center;justify-content:center;gap:12px;min-height:36px}
+.tu-lamp{width:18px;height:18px;border-radius:50%;background:#2A1E14;border:1px solid #3A2C20;transition:background .2s,box-shadow .2s}
+.tu-lamp.on{background:radial-gradient(circle at 50% 40%,#E6FFEF,var(--good) 58%,#1E7A47);border-color:var(--good);box-shadow:0 0 14px 4px rgb(108 201 143 / .55)}
+.tu-cents{font:500 24px/1 var(--f-mono);min-width:96px;text-align:center}
+.tu-hint{font-weight:600;color:var(--muted);min-width:120px}
+.tu-hint.ok{color:var(--good)}
+.tu-level{height:4px;width:100%;border-radius:2px;background:var(--well);overflow:hidden}
+.tu-level i{display:block;height:100%;width:0;background:var(--brass);transition:width .08s}
+.tu-strings{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.tu-strings button{border:1px solid var(--line);background:var(--raised);border-radius:12px;padding:8px 0;display:flex;flex-direction:column;align-items:center;gap:2px;font:600 18px/1.1 var(--f-display)}
+.tu-strings button small{font:500 10px/1 var(--f-mono);color:var(--muted)}
+.tu-strings button.near{border-color:var(--brass);box-shadow:0 0 12px -3px var(--glow)}
+.tu-strings button[aria-pressed="true"]{background:linear-gradient(180deg,var(--brass-hi),var(--brass-lo));color:var(--on-ink);border-color:var(--brass-lo)}
+.tu-strings button[aria-pressed="true"] small{color:var(--on-ink)}
+.tu-ref{display:flex;align-items:center;gap:6px;font:500 13px var(--f-mono);color:var(--muted)}
+.tu-ref button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--raised);font:500 14px var(--f-mono)}
+.tu-err{color:var(--bad);font-size:14px}
+@media (prefers-reduced-motion:reduce){.tu-needle,.tu-lamp,.tu-level i,.tu-note{transition:none}}
+
+/* Path */
+.stage{display:grid;grid-template-columns:84px minmax(0,1fr);gap:4px 16px;padding-block:22px;border-top:1px solid var(--line)}
+.stage:last-child{border-bottom:1px solid var(--line)}
+.badge{width:84px;height:84px;mix-blend-mode:lighten;filter:grayscale(1) brightness(.42) contrast(1.15);transition:filter .3s}
+.stage.cur .badge{filter:drop-shadow(0 0 14px rgb(255 168 72 / .35))}
+.stage.done .badge{filter:none}
+.stage-body{display:flex;flex-direction:column;gap:12px;min-width:0}
+.checks{display:flex;flex-direction:column;gap:8px}
+.check{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;align-items:start;font-size:14px;max-width:66ch}
+.check input{width:18px;height:18px;margin:2px 0 0;accent-color:var(--brass)}
+.check .auto{width:18px;height:18px;margin-top:2px;border-radius:50%;border:1.5px solid var(--muted);display:grid;place-items:center;font-size:11px;line-height:1}
+.check .auto.pass{background:var(--good);border-color:var(--good);color:var(--on-ink)}
+.check small{display:block;color:var(--muted);font-size:12px}
+
+/* Works */
+.cols{display:grid;grid-template-columns:minmax(0,1fr);gap:28px}
+.piece{padding-block:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.piece-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.secs{display:flex;flex-wrap:wrap;gap:6px}
+.sec{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--raised);font-size:13px;font-weight:500}
+.sec small{font:400 11px/1 var(--f-mono);color:var(--muted)}
+.sec[data-st="1"]{border-color:var(--c-fret)} .sec[data-st="2"]{border-color:var(--c-theory)}
+.sec[data-st="3"]{background:linear-gradient(180deg,var(--brass-hi),var(--brass-lo));color:var(--on-ink);border-color:var(--brass-lo)} .sec[data-st="3"] small{color:inherit;opacity:.75}
+.formgrid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.idea{padding-block:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.idea p{max-width:66ch;overflow-wrap:anywhere}
+
+/* History */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.stat{background:linear-gradient(180deg,var(--panel-hi),var(--panel-lo));border:1px solid var(--line);border-radius:16px;padding:14px}
+.stat b{display:block;font:600 30px/1.1 var(--f-display);font-variant-numeric:tabular-nums;color:var(--brass-hi)}
+.stat span{font-size:12px;color:var(--muted)}
+.heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:3px;width:max-content;max-width:100%}
+.heat i,.heat-leg i{width:16px;height:16px;border-radius:4px;background:var(--sunken);display:inline-block}
+.heat-leg i{width:12px;height:12px;border-radius:3px}
+.heat .l1,.heat-leg .l1{background:color-mix(in srgb,var(--brass) 25%,var(--sunken))}
+.heat .l2,.heat-leg .l2{background:color-mix(in srgb,var(--brass) 48%,var(--sunken))}
+.heat .l3,.heat-leg .l3{background:color-mix(in srgb,var(--brass) 74%,var(--sunken))}
+.heat .l4,.heat-leg .l4{background:var(--brass-hi);box-shadow:0 0 6px var(--glow)}
+.heat i.fut{background:none;box-shadow:none}
+.heat-leg{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin-top:8px}
+.hbar{display:grid;grid-template-columns:104px minmax(0,1fr) 56px;gap:10px;align-items:center;font-size:13px;padding-block:5px}
+.hbar .track{height:10px;display:flex}
+.hbar .track i{display:block;height:100%;background:var(--c);border-radius:0 4px 4px 0;min-width:2px}
+.hbar .v{text-align:right;font:400 12px/1 var(--f-mono);color:var(--muted)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-weight:500;color:var(--muted);font-size:12px;padding:6px 8px 6px 0;border-bottom:1px solid var(--line)}
+.tbl td{padding:8px 8px 8px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl td.num,.tbl th.num{text-align:right;padding-left:12px;padding-right:0;white-space:nowrap}
+.tbl td.day{font-family:var(--f-mono);white-space:nowrap;padding-right:12px}
+.tblwrap{overflow-x:auto}
+.bpmrow{display:grid;grid-template-columns:minmax(0,1fr) 96px auto;gap:12px;align-items:center;padding-block:10px;border-top:1px solid var(--line);font-size:14px}
+.bpmrow svg{width:96px;height:28px;display:block}
+.bpmrow .v{font:500 13px/1.2 var(--f-mono);white-space:nowrap}
+.empty{color:var(--muted);padding-block:10px;max-width:60ch}
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:80;background:var(--raised);color:var(--ink);border:1px solid var(--brass-lo);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:500;width:max-content;max-width:calc(100vw - 32px);text-align:center;box-shadow:0 8px 30px rgb(0 0 0 / .5),0 0 18px -6px var(--glow)}
+section.view{display:flex;flex-direction:column;gap:22px}
+.viewhead{display:flex;flex-direction:column;gap:4px;max-width:66ch}
+
+@media (min-width:880px){
+  .app{padding-block:18px 56px}
+  .tabs{position:static;border:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;padding:0;gap:4px}
+  .tabs button{flex:none;flex-direction:row;gap:8px;padding:9px 14px;font-size:14px}
+  .tabs button[aria-current="page"]{background:var(--raised)}
+  .tabs svg{width:18px;height:18px}
+  .hero{margin-inline:0;border-radius:24px;min-height:460px;flex-direction:row;align-items:center;justify-content:flex-start;gap:44px;padding:40px 48px;border:1px solid var(--line)}
+  .hero .bgimg{object-position:70% 60%}
+  .hero::after{background:linear-gradient(90deg,rgb(12 9 7 / .88) 0%,rgb(12 9 7 / .55) 38%,rgb(12 9 7 / 0) 66%)}
+  .hero-main{align-items:flex-start;gap:14px}
+  .hero-side{width:320px}
+  .herostats{text-align:left}
+  .ringwrap{width:248px}
+  .today-body{grid-template-columns:minmax(0,1fr) 330px;gap:40px;align-items:start;margin-top:12px}
+  .blk-act{flex-direction:row}
+  .s-inner{grid-template-columns:380px minmax(0,1fr);gap:36px;align-items:start}
+  .s-top{grid-column:1/-1}
+  .cols{grid-template-columns:repeat(2,minmax(0,1fr));gap:44px;align-items:start}
+  .stats{grid-template-columns:repeat(4,1fr)}
+  .cf{grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:40px;align-items:start}
+  .toast{bottom:28px}
+  .hist-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:36px;align-items:start}
+}
+@media (prefers-reduced-motion:no-preference){
+  .bar i,.s-prog i{transition:width .3s}
+  .btn,.seg button,.tabs button{transition:background-color .15s,border-color .15s,color .15s}
+  .m-dots i{transition:background .08s,box-shadow .12s}
+}
 </style>
+<style>[hidden]{display:none!important}body{margin:0}:root{padding-top:env(safe-area-inset-top,0px)}</style>
 </head>
 <body>
-<div class="app">
-  <header><img src="icon-192.png" alt=""><h1>Ģitāras skaņotājs</h1></header>
 
-  <div class="card readout">
-    <div class="note idle" id="note" aria-live="polite">–</div>
-    <div class="hz" id="hz">&nbsp;</div>
-    <svg class="meter" viewBox="0 0 320 190" aria-hidden="true" id="meter"></svg>
-    <div class="state"><span class="lamp" id="lamp"></span><span class="cents" id="cents">&nbsp;</span><span class="hint" id="hint">&nbsp;</span></div>
-    <div class="level" style="width:100%" title="Mikrofona līmenis"><i id="level"></i></div>
-  </div>
-
-  <button class="btn solid lg" id="start">Sākt skaņošanu</button>
-  <p class="err" id="err" hidden></p>
-
-  <div class="card" style="display:flex;flex-direction:column;gap:14px">
-    <div class="row spread">
-      <select id="tuning" aria-label="Skaņojums">
-        <option value="std">Standarts · E A D G B E</option>
-        <option value="dropd">Drop D · D A D G B E</option>
-        <option value="eb">Pustoni zemāk · E♭ A♭ D♭ G♭ B♭ E♭</option>
-        <option value="dstd">D standarts · D G C F A D</option>
-        <option value="chrom">Hromatisks · jebkura nots</option>
-      </select>
-      <div class="ref"><button id="refDown" aria-label="Atskaites A zemāk">−</button><span id="refVal">A = 440 Hz</span><button id="refUp" aria-label="Atskaites A augstāk">+</button></div>
+<div class="app" id="app">
+  <header class="top">
+    <div class="brand">
+      <img src="img/app-icon.webp" alt="">
+      Ģitāras stunda
     </div>
-    <div class="strings" id="strings"></div>
-    <p class="muted" id="modeTxt">Automātiski: lietotne pati atrod tuvāko stīgu. Pieskaries stīgai, lai skaņotu tieši uz to, vēlreiz, lai atgrieztos automātiskajā režīmā.</p>
-    <div class="row"><button class="btn" id="refTone">Atskaņot atskaites toni</button></div>
-  </div>
-
-  <p class="muted">Labākam rezultātam: kluss fons, telefons tuvu ģitārai, viena stīga reizē. Lasījums nostabilizējas pusotras sekundes laikā pēc uzsitiena.</p>
+    <nav class="tabs" aria-label="Sadaļas">
+      <button data-act="go" data-tab="today" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Šodien</button>
+      <button data-act="go" data-tab="tools"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 3.5h7L19 20.5H5z"/><path d="M12 16l4.5-9"/></svg>Rīki</button>
+      <button data-act="go" data-tab="path"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h5v-5h5V9h6"/></svg>Ceļš</button>
+      <button data-act="go" data-tab="works"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5.5l10-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>Darbi</button>
+      <button data-act="go" data-tab="history"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>Vēsture</button>
+    </nav>
+  </header>
+  <main>
+    <section class="view" id="v-today"></section>
+    <section class="view" id="v-tools" hidden></section>
+    <section class="view" id="v-path" hidden></section>
+    <section class="view" id="v-works" hidden></section>
+    <section class="view" id="v-history" hidden></section>
+  </main>
 </div>
+<div class="session" id="session" hidden></div>
+<div class="toast" id="toast" role="status" hidden></div>
 
 <script>
+(function(){
 'use strict';
-/* ---------- pitch detection: YIN, then a second pass after low-pass (removes string inharmonicity bias) ---------- */
-function yin(buf,sr,minF,maxF){
+
+/* ================= 1. Theory (pure functions) ================= */
+const LET=['C','D','E','F','G','A','B'], NAT=[0,2,4,5,7,9,11];
+const TUNE=[40,45,50,55,59,64];               // string index 0 = 6th string (low E)
+const STR_NAME=['E','A','D','G','B','E'];
+const SHARP=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const FLAT=['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
+const BOTH=SHARP.map((s,i)=>s===FLAT[i]?s:s+'/'+FLAT[i]);
+const ROOTS=[[[0,0]],[[0,1],[1,-1]],[[1,0]],[[1,1],[2,-1]],[[2,0]],[[3,0]],[[3,1],[4,-1]],[[4,0]],[[4,1],[5,-1]],[[5,0]],[[5,1],[6,-1]],[[6,0]]];
+const acc=n=>n>0?'♯'.repeat(n):'♭'.repeat(-n);
+const KINDS={
+  major:{n:'mažors',g:'s',o:'Mažors (joniskais)',f:[[1,0],[2,2],[3,4],[4,5],[5,7],[6,9],[7,11]]},
+  minor:{n:'dabiskais minors',g:'s',o:'Dabiskais minors (eoliskais)',ref:'dorian',cmpn:'dorisko',refg:'doriskā',ch:['♭6'],chx:'♭6 atšķir dabisko minoru no doriskā.',f:[[1,0],[2,2],[3,3],[4,5],[5,7],[6,8],[7,10]]},
+  majPent:{n:'mažora pentatonika',g:'s',f:[[1,0],[2,2],[3,4],[5,7],[6,9]]},
+  minPent:{n:'minora pentatonika',g:'s',f:[[1,0],[3,3],[4,5],[5,7],[7,10]]},
+  blues:{n:'blūza gamma',g:'s',o:'Blūza gamma · minora pentatonika ar ♭5',ch:['♭5'],chx:'♭5 ir blūza nots: īss caurejas tonis starp 4 un 5.',f:[[1,0],[3,3],[4,5],[5,6],[5,7],[7,10]]},
+  lydian:{n:'līdiskais',g:'m',o:'Līdiskais · mažors ar ♯4',ref:'major',cmpn:'mažoru',refg:'mažora',ch:['♯4'],chx:'♯4 atšķir līdisko no mažora.',f:[[1,0],[2,2],[3,4],[4,6],[5,7],[6,9],[7,11]]},
+  mixo:{n:'miksolīdiskais',g:'m',o:'Miksolīdiskais · mažors ar ♭7',ref:'major',cmpn:'mažoru',refg:'mažora',ch:['♭7'],chx:'♭7 atšķir miksolīdisko no mažora.',f:[[1,0],[2,2],[3,4],[4,5],[5,7],[6,9],[7,10]]},
+  dorian:{n:'doriskais',g:'m',o:'Doriskais · minors ar 6',ref:'minor',cmpn:'dabisko minoru',refg:'dabiskā minora',ch:['6'],chx:'Lielā seksta (6) atšķir dorisko no dabiskā minora.',f:[[1,0],[2,2],[3,3],[4,5],[5,7],[6,9],[7,10]]},
+  phrygian:{n:'frīģiskais',g:'m',o:'Frīģiskais · minors ar ♭2',ref:'minor',cmpn:'dabisko minoru',refg:'dabiskā minora',ch:['♭2'],chx:'♭2 atšķir frīģisko no dabiskā minora.',f:[[1,0],[2,1],[3,3],[4,5],[5,7],[6,8],[7,10]]},
+  locrian:{n:'lokriskais',g:'m',o:'Lokriskais · minors ar ♭2 un ♭5',ref:'minor',cmpn:'dabisko minoru',refg:'dabiskā minora',ch:['♭2','♭5'],chx:'♭2 un ♭5 atšķir lokrisko no dabiskā minora. Tieši ♭5 to atšķir no frīģiskā.',f:[[1,0],[2,1],[3,3],[4,5],[5,6],[6,8],[7,10]]},
+  harmMinor:{n:'harmoniskais minors',g:'m',o:'Harmoniskais minors · minors ar 7',ref:'minor',cmpn:'dabisko minoru',refg:'dabiskā minora',ch:['7'],chx:'Lielā septima (7) atšķir harmonisko minoru no dabiskā.',f:[[1,0],[2,2],[3,3],[4,5],[5,7],[6,8],[7,11]]},
+  phrygDom:{n:'frīģiskais dominantais',g:'m',o:'Frīģiskais dominantais · minors ar ♭2 un 3',ref:'minor',cmpn:'dabisko minoru',refg:'dabiskā minora',ch:['♭2','3'],chx:'♭2 un lielā terca (3) atšķir šo gammu no dabiskā minora.',f:[[1,0],[2,1],[3,4],[4,5],[5,7],[6,8],[7,10]]},
+  maj:{n:'mažora trijskanis',g:'c',chord:1,f:[[1,0],[3,4],[5,7]]},
+  min:{n:'minora trijskanis',g:'c',chord:1,f:[[1,0],[3,3],[5,7]]},
+  dim:{n:'pamazinātais trijskanis',g:'c',chord:1,f:[[1,0],[3,3],[5,6]]},
+  aug:{n:'palielinātais trijskanis',g:'c',chord:1,f:[[1,0],[3,4],[5,8]]},
+  maj7:{n:'maj7 akords',g:'c',chord:1,f:[[1,0],[3,4],[5,7],[7,11]]},
+  dom7:{n:'7 akords (dominantes)',g:'c',chord:1,f:[[1,0],[3,4],[5,7],[7,10]]},
+  min7:{n:'m7 akords',g:'c',chord:1,f:[[1,0],[3,3],[5,7],[7,10]]},
+  m7b5:{n:'m7♭5 akords',g:'c',chord:1,f:[[1,0],[3,3],[5,6],[7,10]]},
+  six:{n:'akords ar sekstu (6)',o:'6 · mažors ar lielo sekstu',g:'c',chord:1,f:[[1,0],[3,4],[5,7],[6,9]]},
+  m6:{n:'minora akords ar sekstu (m6)',o:'m6 · minors ar lielo sekstu',g:'c',chord:1,f:[[1,0],[3,3],[5,7],[6,9]]},
+  six9:{n:'6/9 akords',o:'6/9 · seksta un nona',g:'c',chord:1,f:[[1,0],[3,4],[5,7],[6,9],[9,14]]},
+  add9:{n:'add9 akords',o:'add9 · nona bez septimas',g:'c',chord:1,f:[[1,0],[3,4],[5,7],[9,14]]},
+  maj9:{n:'maj9 akords',o:'maj9 · maj7 ar nonu',g:'c',chord:1,f:[[1,0],[3,4],[5,7],[7,11],[9,14]]},
+  dom9:{n:'9 akords (dominantes nonakords)',o:'9 · dominantes nonakords',g:'c',chord:1,f:[[1,0],[3,4],[5,7],[7,10],[9,14]]},
+  min9:{n:'m9 akords',o:'m9 · m7 ar nonu',g:'c',chord:1,f:[[1,0],[3,3],[5,7],[7,10],[9,14]]},
+  min11:{n:'m11 akords',o:'m11 · m9 ar undecīmu',g:'c',chord:1,f:[[1,0],[3,3],[5,7],[7,10],[9,14],[11,17]]},
+  dom13:{n:'13 akords (dominantes)',o:'13 · dominantes, ar tercdecīmu',g:'c',chord:1,f:[[1,0],[3,4],[5,7],[7,10],[9,14],[13,21]]},
+  sus2:{n:'sus2 akords',o:'sus2 · sekunda tercas vietā',g:'c',chord:1,f:[[1,0],[2,2],[5,7]]},
+  sus4:{n:'sus4 akords',o:'sus4 · kvarta tercas vietā',g:'c',chord:1,f:[[1,0],[4,5],[5,7]]},
+  note:{n:'pa visu grifu',g:'n',f:[[1,0]]}
+};
+function spell(rootPc,kind){
+  const f=KINDS[kind].f, minorish=f.some(([d,s])=>d===3&&s===3);
+  let best=null;
+  for(const [li,ra] of ROOTS[rootPc]){
+    let cost=0;
+    const notes=f.map(([d,s])=>{
+      const l=(li+d-1)%7; let a=((rootPc+s-NAT[l])%12+12)%12; if(a>6)a-=12;
+      cost+=Math.abs(a)+(Math.abs(a)>1?3:0);
+      return {pc:(rootPc+s)%12,name:LET[l]+acc(a),deg:acc(s-NAT[(d-1)%7]-12*Math.floor((d-1)/7))+d,d,semi:s};
+    });
+    if((ra<0&&minorish)||(ra>0&&!minorish)) cost-=0.5;
+    if(!best||cost<best.cost) best={cost,notes};
+  }
+  return best.notes;
+}
+function triadShapes(rootPc,kind,low,maxF){
+  const t=spell(rootPc,kind); if(t.length!==3) return [];
+  const names=['Pamatveids','1. apvērsums','2. apvērsums'], res=[];
+  for(let inv=0;inv<3;inv++){
+    const o=[t[inv],t[(inv+1)%3],t[(inv+2)%3]];
+    for(let f0=0;f0<=maxF;f0++){
+      if((TUNE[low]+f0)%12!==o[0].pc) continue;
+      const m0=TUNE[low]+f0, m1=m0+((o[1].pc-o[0].pc+12)%12), m2=m1+((o[2].pc-o[1].pc+12)%12);
+      const f1=m1-TUNE[low+1], f2=m2-TUNE[low+2];
+      if(f1<0||f2<0||f1>maxF||f2>maxF) continue;
+      res.push({inv,name:names[inv],cells:[{s:low,f:f0,t:o[0]},{s:low+1,f:f1,t:o[1]},{s:low+2,f:f2,t:o[2]}]});
+    }
+  }
+  return res.sort((a,b)=>a.cells[0].f-b.cells[0].f);
+}
+function spellL(li,rootPc,kind){return KINDS[kind].f.map(([d,s])=>{const l=(li+d-1)%7;let a=((rootPc+s-NAT[l])%12+12)%12;if(a>6)a-=12;return {pc:(rootPc+s)%12,name:LET[l]+acc(a),d,deg:acc(s-NAT[(d-1)%7]-12*Math.floor((d-1)/7))+d}})}
+const CIRC=[0,7,2,9,4,11,6,1,8,3,10,5];
+const CIRC_MAJ=['C','G','D','A','E','B','F♯','D♭','A♭','E♭','B♭','F'];
+const CIRC_MIN=['A','E','B','F♯','C♯','G♯','E♭','B♭','F','C','G','D'];
+const CIRC_SIG=['bez zīmēm','1 ♯','2 ♯','3 ♯','4 ♯','5 ♯','6 ♯ vai 6 ♭','5 ♭','4 ♭','3 ♭','2 ♭','1 ♭'];
+const cIdx=pc=>(pc*7)%12;
+const qSuf=q=>q==='min'?'m':q==='dim'?'°':'';
+const KEYDEF={
+  maj:{scale:'major',dia:[[0,'maj','I'],[1,'min','ii'],[2,'min','iii'],[3,'maj','IV'],[4,'maj','V'],[5,'min','vi'],[6,'dim','vii°']],
+    col:[['major',1,'maj','II','V/V, ved uz V'],['major',2,'maj','III','V/vi, ved uz vi'],['minor',6,'maj','♭VII','aizņemts no vienvārda minora'],['minor',5,'maj','♭VI','aizņemts no vienvārda minora'],['minor',3,'min','iv','aizņemts no vienvārda minora']]},
+  min:{scale:'minor',dia:[[0,'min','i'],[1,'dim','ii°'],[2,'maj','♭III'],[3,'min','iv'],[4,'min','v'],[5,'maj','♭VI'],[6,'maj','♭VII']],
+    col:[['harmMinor',4,'maj','V','harmoniskais minors, spēcīgs ceļš uz i'],['dorian',3,'maj','IV','doriskā krāsa'],['phrygian',1,'maj','♭II','frīģiskā krāsa']]}};
+function keyChordsFor(k,mode){const tPc=mode==='maj'?CIRC[k]:(CIRC[k]+9)%12,li=LET.indexOf((mode==='maj'?CIRC_MAJ[k]:CIRC_MIN[k])[0]),D=KEYDEF[mode];
+  const sc=spellL(li,tPc,D.scale),chords=D.dia.map(([deg,q,rn],i)=>({pc:sc[deg].pc,root:sc[deg].name,q,rn,kind:i===0?'tonic':'dia',note:''}));
+  for(const [scale,deg,q,rn,note] of D.col){const n=spellL(li,tPc,scale)[deg];chords.push({pc:n.pc,root:n.name,q,rn,kind:'col',note})}
+  return {tonicPc:tPc,tonic:sc[0].name,chords}}
+const RN=['I','♭II','II','♭III','III','IV','♯IV','V','♭VI','VI','♭VII','VII'];
+function romanOf(pc,q,t){let r=RN[(pc-t+12)%12];if(q!=='maj')r=r.replace(/[IV]+/,m=>m.toLowerCase());return r+(q==='dim'?'°':'')}
+function segOf(c){return c.q==='maj'?['o',cIdx(c.pc)]:['i',cIdx((c.pc+3)%12)]}
+const OPEN={'0maj':[-1,3,2,0,1,0],'9maj':[-1,0,2,2,2,0],'7maj':[3,2,0,0,0,3],'4maj':[0,2,2,1,0,0],'2maj':[-1,-1,0,2,3,2],
+  '9min':[-1,0,2,2,1,0],'4min':[0,2,2,0,0,0],'2min':[-1,-1,0,2,3,1]};
+function voicings(pc,q){const out=[],o=OPEN[pc+q];if(o)out.push({n:'Atvērtais',f:o});
+  if(q==='maj'||q==='min'){const r=(pc+8)%12,a=(pc+3)%12;
+    if(r>0)out.push({n:'E forma · '+r+'. lads',f:q==='maj'?[r,r+2,r+2,r+1,r,r]:[r,r+2,r+2,r,r,r],barre:{f:r,from:0}});
+    if(a>0)out.push({n:'A forma · '+a+'. lads',f:q==='maj'?[-1,a,a+2,a+2,a+2,a]:[-1,a,a+2,a+2,a+1,a],barre:{f:a,from:1}})}
+  out.push({n:'Trijskaņi 1-2-3',tri:3},{n:'Trijskaņi 2-3-4',tri:2});return out}
+function vlPath(prog){let prev=null;const mid=x=>x.cells.reduce((s,c)=>s+c.f,0)/3,dist=(x,y)=>x.cells.reduce((s,c,i)=>s+Math.abs(c.f-y.cells[i].f),0);
+  return prog.map(c=>{const sh=triadShapes(c.pc,c.q,3,15);if(!sh.length)return null;
+    const best=sh.reduce((a,b)=>(prev?dist(b,prev)<dist(a,prev):Math.abs(mid(b)-5)<Math.abs(mid(a)-5))?b:a);prev=best;return best})}
+function grips(rootPc,kind){const f=KINDS[kind].f,tones=new Set(f.map(([d,s])=>(rootPc+s)%12)),hasHi=f.some(([d])=>d>=11);
+  const req=f.filter(([d])=>!(d===5&&f.length>=4)&&!(d===9&&hasHi)).map(([d,s])=>(rootPc+s)%12),minN=Math.min(4,f.length),out=[];
+  for(const bs of [0,1,2]){let best=null;
+    for(let fb=1;fb<=12;fb++){if((TUNE[bs]+fb)%12!==rootPc)continue;
+      const opts=[];for(let s=bs+1;s<6;s++){const o=[-1];for(let x=Math.max(1,fb-3);x<=fb+4;x++)if(tones.has((TUNE[s]+x)%12))o.push(x);opts.push(o)}
+      const cur=[],rec=i=>{if(i<opts.length){for(const x of opts[i]){cur[i]=x;rec(i+1)}return}
+        const fr=[-1,-1,-1,-1,-1,-1];fr[bs]=fb;cur.forEach((x,j)=>fr[bs+1+j]=x);
+        const snd=fr.map((x,s)=>[s,x]).filter(v=>v[1]>=0),n=snd.length;if(n<minN)return;
+        const fs=snd.map(v=>v[1]),mn=Math.min(...fs),mx=Math.max(...fs);if(mx-mn>3)return;
+        const pcs=new Set(snd.map(([s,x])=>(TUNE[s]+x)%12));if(req.some(p=>!pcs.has(p)))return;
+        const last=snd[n-1][0];let gaps=0,pm=false;for(let s=bs;s<=last;s++){if(fr[s]<0){if(pm)return;gaps++;pm=true}else pm=false}if(gaps>1)return;
+        const atMin=fs.filter(x=>x===mn).length;if(n-(atMin>1?atMin-1:0)>4)return;
+        const score=pcs.size*12+n*3-(mx-mn)*3-gaps*5-(n-pcs.size)*2+(mn===fb?4:0);
+        if(!best||score>best.score||(score===best.score&&fb<best.fb))best={score,fb,fr:fr.slice()}};
+      rec(0)}
+    if(best)out.push({bass:bs,fb:best.fb,fr:best.fr})}
+  return out}
+function spellF(rootPc,f){const minorish=f.some(([d,s])=>d===3&&s===3);let best=null;
+  for(const [li,ra] of ROOTS[rootPc]){let cost=0;const notes=f.map(([d,s])=>{const l=(li+d-1)%7;let a=((rootPc+s-NAT[l])%12+12)%12;if(a>6)a-=12;cost+=Math.abs(a)+(Math.abs(a)>1?3:0);
+      return {pc:(rootPc+s)%12,name:LET[l]+acc(a),deg:acc(s-NAT[(d-1)%7]-12*Math.floor((d-1)/7))+d,d,semi:s}});
+    if((ra<0&&minorish)||(ra>0&&!minorish))cost-=0.5;if(!best||cost<best.cost)best={cost,notes}}
+  return best.notes}
+const CT=[['',[[1,0],[3,4],[5,7]]],['m',[[1,0],[3,3],[5,7]]],['°',[[1,0],[3,3],[5,6]]],['+',[[1,0],[3,4],[5,8]]],
+  ['sus2',[[1,0],[2,2],[5,7]]],['sus4',[[1,0],[4,5],[5,7]]],['5',[[1,0],[5,7]]],
+  ['6',[[1,0],[3,4],[5,7],[6,9]]],['m6',[[1,0],[3,3],[5,7],[6,9]]],['7',[[1,0],[3,4],[5,7],[7,10]]],['maj7',[[1,0],[3,4],[5,7],[7,11]]],
+  ['m7',[[1,0],[3,3],[5,7],[7,10]]],['m7♭5',[[1,0],[3,3],[5,6],[7,10]]],['°7',[[1,0],[3,3],[5,6],[7,9]]],['m(maj7)',[[1,0],[3,3],[5,7],[7,11]]],
+  ['7sus4',[[1,0],[4,5],[5,7],[7,10]]],['7♯5',[[1,0],[3,4],[5,8],[7,10]]],
+  ['add9',[[1,0],[3,4],[5,7],[9,14]]],['m(add9)',[[1,0],[3,3],[5,7],[9,14]]],['6/9',[[1,0],[3,4],[5,7],[6,9],[9,14]]],
+  ['9',[[1,0],[3,4],[5,7],[7,10],[9,14]]],['maj9',[[1,0],[3,4],[5,7],[7,11],[9,14]]],['m9',[[1,0],[3,3],[5,7],[7,10],[9,14]]],
+  ['7♭9',[[1,0],[3,4],[5,7],[7,10],[9,13]]],['7♯9',[[1,0],[3,4],[5,7],[7,10],[9,15]]],['maj7♯11',[[1,0],[3,4],[5,7],[7,11],[11,18]]],
+  ['m11',[[1,0],[3,3],[5,7],[7,10],[9,14],[11,17]]],['13',[[1,0],[3,4],[5,7],[7,10],[9,14],[13,21]]],['maj13',[[1,0],[3,4],[5,7],[7,11],[9,14],[13,21]]],['m13',[[1,0],[3,3],[5,7],[7,10],[9,14],[13,21]]]];
+const IVN=['prīma','mazā sekunda','lielā sekunda','mazā terca','lielā terca','tīrā kvarta','tritons','tīrā kvinta','mazā seksta','lielā seksta','mazā septima','lielā septima'];
+function identify(fr){const snd=[];fr.forEach((f,s)=>{if(f>=0)snd.push(TUNE[s]+f)});if(!snd.length)return null;
+  const bass=snd[0]%12,pcs=[...new Set(snd.map(m=>m%12))],res=[],seen=new Set();
+  for(const r of pcs){const I=new Set(pcs.map(p=>(p-r+12)%12));
+    for(const [sfx,f] of CT){const T=new Set(f.map(x=>x[1]%12));if([...I].some(i=>!T.has(i)))continue;
+      const hi=f.some(x=>x[0]>=11),miss=f.filter(x=>!I.has(x[1]%12));
+      const has7=f.some(x=>x[0]===7)||f.length>=5;if(miss.some(([d,s])=>!((s===7&&has7)||(s===14&&hi))))continue;
+      const notes=spellF(r,f),bn=notes.find(n=>n.pc===bass),name=notes[0].name+sfx+(bass!==r?'/'+bn.name:'');
+      if(seen.has(name))continue;seen.add(name);
+      res.push({name,root:r,sfx,notes,missing:miss.map(x=>notes.find(n=>n.semi===x[1])),score:100-4*miss.length-(bass!==r?10:0)-f.length+(miss.length?0:4)})}}
+  res.sort((a,b)=>b.score-a.score);return {bass,pcs,cands:res.slice(0,6)}}
+function keysFor(pcs){const out=[];for(let k=0;k<12;k++){const sc=[0,2,4,5,7,9,11].map(x=>(k+x)%12);if(pcs.every(p=>sc.includes(p)))out.push(k)}return out}
+const sfxQ=x=>x.includes('°')||x.startsWith('m7♭5')?'dim':/^m(?!aj)/.test(x)?'min':'maj';
+const PMODES=[{mode:'maj',sc:[0,2,4,5,7,9,11],tq:'maj',kind:'major',nm:'mažors',pen:0},{mode:'min',sc:[0,2,3,5,7,8,10],tq:'min',kind:'minor',nm:'minors',pen:0},
+  {mode:'mixo',sc:[0,2,4,5,7,9,10],tq:'maj',kind:'mixo',nm:'miksolīdiskais',pen:.5},{mode:'dor',sc:[0,2,3,5,7,9,10],tq:'min',kind:'dorian',nm:'doriskais',pen:.5}];
+const PATS=[[['I','V','vi','IV'],'I–V–vi–IV: populārākā pop un roka secība'],[['vi','IV','I','V'],'vi–IV–I–V: tā pati secība, sākot no minora'],
+  [['I','vi','IV','V'],'I–vi–IV–V: 50. gadu secība'],[['ii','V','I'],'ii–V–I: džeza kadence'],[['I','IV','V'],'I–IV–V: blūzs un rokenrols'],
+  [['I','♭VII','IV'],'I–♭VII–IV: miksolīdiskais roks'],[['i','♭VI','♭VII'],'i–♭VI–♭VII: episka minora secība'],[['i','♭VII','♭VI','V'],'i–♭VII–♭VI–V: Andalūzijas kadence'],
+  [['i','iv','v'],'i–iv–v: minora pamata secība'],[['i','♭VII','♭VI'],'i–♭VII–♭VI: lejupejoša minora secība'],[['IV','V','iii','vi'],'IV–V–iii–vi: J-pop secība'],[['I','V','IV'],'I–V–IV: roka secība']];
+function analyzeProg(ch){if(!ch.length)return [];const res=[];
+  for(let t=0;t<12;t++)for(const M of PMODES){const sc=M.sc.map(x=>(t+x)%12);let K=null;
+    if(M.mode==='maj'||M.mode==='min')K=keyChordsFor(M.mode==='maj'?cIdx(t):cIdx((t+3)%12),M.mode);
+    let score=-M.pen;const items=ch.map(c=>{const m=K&&K.chords.find(x=>x.pc===c.root&&x.q===c.q);
+      if(m&&m.kind!=='col'){score+=2;return {rn:m.rn,kind:'dia'}}
+      if(c.pcs.every(p=>sc.includes(p))){score+=2;return {rn:romanOf(c.root,c.q,t),kind:'dia'}}
+      if(m){score+=1;return {rn:m.rn,kind:'col',note:m.note}}
+      return {rn:romanOf(c.root,c.q,t),kind:'out'}});
+    if(ch[0].root===t&&ch[0].q===M.tq)score+=2;const L=ch.length;if(L>1&&ch[L-1].root===t&&ch[L-1].q===M.tq){score+=1;if(ch[L-2].root===(t+7)%12&&ch[L-2].q==='maj')score+=2}
+    const tn=spell(t,M.kind)[0].name;res.push({t,mode:M.mode,name:tn+' '+M.nm,score,items})}
+  res.sort((a,b)=>b.score-a.score);return res}
+function findPats(rns){const n=rns.length,scan=wrap=>{const out=[];for(const [p,label] of PATS){if(p.length>n)continue;
+    for(let i=0;i<(wrap?n:n-p.length+1);i++){if(p.every((x,j)=>rns[(i+j)%n]===x)){out.push(label+(wrap?' (atkārtojot cilpā)':''));break}}}return out};
+  const a=scan(false);return a.length?a:scan(true)}
+const MODES=[{id:'lyd',deg:3,s:'līdiskais',c:'Līdiskais',ch:'II',cn:'♯4'},{id:'ion',deg:0,s:'mažors',c:'Joniskais · mažors',ch:null},
+  {id:'mix',deg:4,s:'miksolīdiskais',c:'Miksolīdiskais',ch:'♭VII',cn:'♭7'},{id:'dor',deg:1,s:'doriskais',c:'Doriskais',ch:'IV',cn:'6'},
+  {id:'aeo',deg:5,s:'minors',c:'Eoliskais · minors',ch:'♭VI',cn:'♭6'},{id:'phr',deg:2,s:'frīģiskais',c:'Frīģiskais',ch:'♭II',cn:'♭2'},{id:'loc',deg:6,s:'lokriskais',c:'Lokriskais',ch:'♭V',cn:'♭5'}];
+const MODE_BY=Object.fromEntries(MODES.map(m=>[m.id,m]));
+const MQ3=['maj','min','min','maj','maj','min','dim'],MQ7=['maj7','min7','min7','maj7','dom7','min7','m7b5'];
+const rn7=(rn,q7)=>q7==='maj7'?rn+'maj7':q7==='m7b5'?rn.replace('°','')+'ø7':rn+'7';
+function modeChordsFor(k,md){const M=MODE_BY[md],P=CIRC[k],sc=spellL(LET.indexOf(CIRC_MAJ[k][0]),P,'major'),t=sc[M.deg];
+  const chords=(md==='ion'||md==='aeo')?keyChordsFor(k,md==='ion'?'maj':'min').chords.map(c=>Object.assign({},c))
+    :sc.map((n,i)=>({pc:n.pc,root:n.name,q:MQ3[i],rn:romanOf(n.pc,MQ3[i],t.pc),kind:i===M.deg?'tonic':'dia',note:''}));
+  if(md==='loc')chords.forEach(c=>{c.rn=c.rn.replace('♯IV','♭V').replace('♯iv','♭v')});
+  for(const c of chords){const i=sc.findIndex(n=>n.pc===c.pc);
+    if(c.kind!=='col'&&i>=0&&MQ3[i]===c.q){c.q7=MQ7[i];c.rn7=rn7(c.rn,MQ7[i])}
+    else if(c.kind==='col'&&['II','III','V'].includes(c.rn)){c.q7='dom7';c.rn7=c.rn+'7'}
+    if(M.ch&&c.kind==='dia'&&c.rn===M.ch)c.kind='char'}
+  return {tonicPc:t.pc,tonic:t.name,chords,parent:CIRC_MAJ[k]}}
+/*THEORY-END*/
+
+/* ================= 2. Content ================= */
+const BLOCKS=[
+  {id:'tech',n:'Tehnika',w:10},
+  {id:'fret',n:'Grifs',w:10},
+  {id:'theory',n:'Teorija',w:10},
+  {id:'rep',n:'Skaņdarbs',w:15},
+  {id:'comp',n:'Komponēšana',w:15}
+];
+const BL=Object.fromEntries(BLOCKS.map(b=>[b.id,b]));
+const ALLSTR=[0,1,2,3,4,5];
+const STAGES=[
+  {t:'Grifa karte',s:'Notis uz visām sešām stīgām. Kamēr tās nav automātiskas, formas paliek formas un teoriju nav kur pielikt.',
+   checks:[
+    {auto:1,strings:[0,1],acc:.9,ms:3000,n:30,t:'6. un 5. stīga trenažierī: 90 % pareizi, vidēji zem 3 s'},
+    {auto:1,strings:ALLSTR,acc:.85,ms:4000,n:20,t:'Visas sešas stīgas trenažierī: 85 % pareizi, vidēji zem 4 s'},
+    {t:'Jebkuru noti atrodu uz visām sešām stīgām 60 BPM tempā, viena nots uz sitienu'},
+    {t:'A minora pentatonikas 1. pozīciju nospēlēju, skaļi nosaucot katru noti'}]},
+  {t:'No pentatonikas uz gammu',s:'Pentatonikas tu jau proti. Mažors un minors ir tās pašas formas ar divām notīm klāt.',
+   checks:[
+    {t:'Katrā no piecām pentatonikas pozīcijām zinu, kur ir pamattonis'},
+    {t:'Jebkurā minora pentatonikas pozīcijā pielieku 2. un ♭6. pakāpi un iegūstu dabisko minoru'},
+    {t:'G mažoru nospēlēju pa visu grifu bez apstāšanās, 3 notis uz stīgas'},
+    {t:'Nosaucu paralēlo minoru C, G, D, A un E mažoram'}]},
+  {t:'Trijskaņi un apvērsumi',s:'Akords kļūst par trim notīm, ko redzi jebkurā grifa vietā. No šejienes sākas apzināta komponēšana.',
+   checks:[
+    {t:'Mažora un minora trijskani ar abiem apvērsumiem nospēlēju uz 1-2-3 stīgām jebkurā tonalitātē'},
+    {t:'To pašu nospēlēju uz 2-3-4 stīgām'},
+    {t:'C mažora harmonizēto gammu (C, Dm, Em, F, G, Am, B°) nospēlēju trijskaņos uz augšu un atpakaļ'},
+    {t:'Secību C–G–Am–F nospēlēju ar tuvākajiem apvērsumiem, nepārlecot vairāk par 3 ladiem'}]},
+  {t:'Tonalitāte un progresijas',s:'Kāpēc akordi sader kopā un kā rifs un solo balstās uz tiem. AC/DC, Status Quo un Whitesnake teritorija.',
+   checks:[
+    {t:'Nosaucu visus septiņus pakāpju akordus G, D, A un E mažorā'},
+    {t:'Pēc dzirdes atšķiru I–IV–V no I–♭VII–IV'},
+    {t:'Solo laikā katrā akordu maiņā trāpu uz jaunā akorda tercas'},
+    {t:'Ierakstīju Cubase vienu savu rifu ar pantu un piedziedājumu'}]},
+  {t:'Modi',s:'Līdiskais, miksolīdiskais, doriskais un frīģiskais kā četras krāsas virs vienas basa nots. Satriani un Vai skanējuma pamats.',
+   checks:[
+    {t:'Katram no četriem modiem nosaucu raksturīgo noti: ♯4, ♭7, lielā seksta minorā, ♭2'},
+    {t:'Virs E burdona pēc kārtas nospēlēju E līdisko, miksolīdisko, dorisko un frīģisko'},
+    {t:'Pēc dzirdes atšķiru līdisko no mažora un dorisko no minora'},
+    {t:'Ierakstīju vienas minūtes improvizāciju vienā modī'}]},
+  {t:'Septakordi, arpedžo un krāsas',s:'Četru skaņu akordi, arpedžo, harmoniskais minors, nepāra metri un aizņemtie akordi. Plini virziens.',
+   checks:[
+    {t:'C mažora septakordus (Cmaj7, Dm7, Em7, Fmaj7, G7, Am7, Bm7♭5) nospēlēju kā arpedžo'},
+    {t:'Virs E7 akorda izmantoju A harmonisko minoru un trāpu uz G♯'},
+    {t:'Savu rifu nospēlēju 5/4 un 7/8 metrā ar metronomu'},
+    {t:'Ierakstīju pabeigtu divu minūšu skaņdarbu ar vismaz vienu aizņemtu akordu'}]}
+];
+const tr=(mode,strings,extra)=>Object.assign({k:'trainer',mode,strings},extra||{});
+const mp=(...p)=>({k:'map',presets:p.map(([root,kind,set,lab])=>({root,kind,set:set||0,lab:lab||'n'}))});
+const EX=[
+ /* --- Tehnika --- */
+ {id:'t1',b:'tech',st:1,bpm:70,t:'Hromatiskā 1-2-3-4',how:['Mainīgie sitieni (uz leju, uz augšu), katram ladam savs pirksts.','No 6. līdz 1. stīgai, tad vienu ladu augstāk un atpakaļ.','Divas notis uz sitienu. Kad trīs reizes pēc kārtas sanāk tīri, pieliec 4 BPM.']},
+ {id:'t2',b:'tech',st:1,bpm:70,t:'Minora pentatonika pa trim',tool:mp([9,'minPent']),how:['A minora pentatonika, 1. pozīcija pie 5. lada.','Spēlē pa trim notīm: 1-2-3, 2-3-4, 3-4-5 un tā līdz augšai, tad atpakaļ.','Divas notis uz sitienu, mainīgie sitieni.']},
+ {id:'t3',b:'tech',st:1,bpm:60,t:'Legato pa trim notīm uz stīgas',how:['Uz 2. stīgas ladi 5-7-8: uzsit tikai pirmo noti, pārējās ar hammer-on.','Atpakaļ 8-7-5 ar pull-off. Tad tas pats uz 1. stīgas, neapstājoties.','Visām notīm jāskan vienādi skaļi. Trīs notis uz sitienu.']},
+ {id:'t4',b:'tech',st:1,bpm:0,t:'Bendi uz mērķa noti',how:['Nospēlē 2. stīgas 10. ladu (A) un iegaumē skaņu.','Velc 2. stīgas 8. ladu (G) uz augšu, līdz skan tieši tā pati A.','Pamīšus: mērķa nots, bends. Tad pustoņa bends no 9. lada uz to pašu A.','Kad augstums ir precīzs, augšā pieliec vibrato.']},
+ {id:'t5',b:'tech',st:1,bpm:0,tool:{k:'metro',bpm:60,beats:4},t:'Vibrato ritmā',how:['Metronoms 60 BPM. Turi vienu noti, piemēram, 3. stīgas 7. ladu.','Vibrato kustības ritmā: divas uz sitienu, tad trīs, tad četras.','Katrs ritms četras taktis. Atkārto ar katru pirkstu.']},
+ {id:'t6',b:'tech',st:1,bpm:100,t:'Bugī rifs ar klusināšanu',how:['A5: atvērta 5. stīga kopā ar 4. stīgas 2. ladu. Astotdaļas, tikai sitieni uz leju.','Uz 2. un 4. sitiena 2. lada vietā spēlē 4. ladu (A6).','Labās rokas mala viegli klusina stīgas pie tiltiņa.','Tas pats no D (4. un 3. stīga) un no E (6. un 5. stīga).']},
+ {id:'t7',b:'tech',st:2,bpm:70,t:'G mažors, 3 notis uz stīgas',tool:mp([7,'major']),how:['6. stīga: ladi 3-5-7. 5. stīga: 3-5-7. 4. stīga: 4-5-7.','3. stīga: 4-5-7. 2. stīga: 5-7-8. 1. stīga: 5-7-8.','Mainīgie sitieni, trīs notis uz sitienu, uz augšu un atpakaļ.']},
+ {id:'t8',b:'tech',st:3,bpm:70,t:'Trijskaņu arpedžo pa trim stīgām',tool:mp([0,'maj',1,'d']),how:['Kartē redzamas C mažora trijskaņa formas uz 1-2-3 stīgām.','Katru formu spēlē pa vienai notij uz augšu un atpakaļ.','Bez pauzes pārej uz nākamo formu augstāk pa grifu.']},
+ {id:'t9',b:'tech',st:4,bpm:0,tool:{k:'metro',bpm:80,beats:4},t:'Ritms ar pauzēm',how:['Metronoms 80 BPM. Viens akords: E5.','1. takts: sitieni uz 1 un 3. 2. takts: sitieni uz „un” pēc 2 un pēc 4.','Starp sitieniem pilnīgs klusums. Klusini ar abām rokām.']},
+ /* --- Grifs --- */
+ {id:'f1',b:'fret',st:1,t:'Notis uz 6. stīgas',tool:tr('name',[1,0,0,0,0,0]),how:['Trenažieris rāda vietu uz grifa, tu izvēlies noti.','Sāc bez diēziem un bemoliem. Kad precizitāte pārsniedz 90 %, ieslēdz tos.','Beigās paņem ģitāru un to pašu nospēlē, nosaucot notis skaļi.']},
+ {id:'f2',b:'fret',st:1,t:'Notis uz 5. stīgas',tool:tr('name',[0,1,0,0,0,0]),how:['Tas pats, kas ar 6. stīgu.','Ievēro: 5. stīgas nots ir tā pati, kas 6. stīgā piecus ladus tālāk.','Beigās nospēlē uz ģitāras, nosaucot notis skaļi.']},
+ {id:'f3',b:'fret',st:1,t:'6. un 5. stīga: atrodi noti',tool:tr('find',[1,1,0,0,0,0]),how:['Trenažieris nosauc noti un stīgu, tu pieskaries pareizajam ladam.','Skaties uz reakcijas laiku: mērķis ir zem 3 sekundēm.']},
+ {id:'f4',b:'fret',st:1,t:'Oktāvu formas',tool:mp([7,'note']),how:['No 6. vai 5. stīgas: tā pati nots ir divas stīgas augstāk un divus ladus tālāk.','No 4. vai 3. stīgas: divas stīgas augstāk un trīs ladus tālāk.','Atrodi visus G pa grifu, izmantojot tikai šīs divas formas. Tad D, A un C.']},
+ {id:'f5',b:'fret',st:1,t:'Viena nots uz visām stīgām',tool:tr('drill',[1,1,1,1,1,1]),how:['Ieslēdz metronomu uz 60 BPM. Ekrānā parādās nots.','Nospēlē to uz katras stīgas no 6. līdz 1., viena nots uz sitienu.','Pēc astoņiem sitieniem nāk nākamā nots.']},
+ {id:'f6',b:'fret',st:1,t:'Notis uz 4. un 3. stīgas',tool:tr('name',[0,0,1,1,0,0]),how:['Oktāvu forma: 6. stīgas nots atkārtojas uz 4. stīgas divus ladus tālāk.','5. stīgas nots tāpat atkārtojas uz 3. stīgas divus ladus tālāk.']},
+ {id:'f7',b:'fret',st:1,t:'Notis uz 2. un 1. stīgas',tool:tr('name',[0,0,0,0,1,1]),how:['1. stīgas notis ir tās pašas, kas 6. stīgā.','5. stīgas nots atkārtojas uz 2. stīgas divus ladus tuvāk galviņai.']},
+ {id:'f8',b:'fret',st:1,t:'Viss grifs: atrodi noti',tool:tr('find',[1,1,1,1,1,1]),how:['Visas sešas stīgas.','Trenažieris biežāk jautā vietas, kur kļūdies vai domā ilgāk.']},
+ {id:'f9',b:'fret',st:2,t:'Pamattoņi pentatonikas pozīcijās',tool:mp([9,'minPent',0,'d']),how:['Kartē A minora pentatonika ar pakāpēm.','Katrā no piecām pozīcijām atrodi visus pamattoņus (1).','Spēlē pozīciju un apstājies tikai uz pamattoņa.']},
+ {id:'f10',b:'fret',st:2,t:'Viss grifs ar diēziem un bemoliem',tool:tr('name',[1,1,1,1,1,1],{acc:true}),how:['Visas stīgas, visas 12 notis.','Vienai vietai ir divi nosaukumi: F♯ un G♭ ir viena un tā pati skaņa.']},
+ {id:'f11',b:'fret',st:3,t:'Terca un kvinta ap pamattoni',tool:mp([0,'maj',0,'d'],[9,'min',0,'d']),how:['Kartē C mažora trijskanis pa visu grifu.','No katra C atrodi tuvāko tercu (E) un kvintu (G).','Pārslēdz uz A minoru un atkārto.']},
+ /* --- Teorija --- */
+ {id:'h1',b:'theory',st:1,t:'12 notis un divi izņēmumi',how:['Starp blakus notīm ir diēzs vai bemols, izņemot E–F un B–C.','Uz 6. stīgas spēlē pa vienam ladam no atvērtas stīgas līdz 12. ladam un nosauc katru noti.','Tas pats uz 5. stīgas. 12. ladā nots atkārtojas oktāvu augstāk.']},
+ {id:'h2',b:'theory',st:1,t:'C mažors pa vienu stīgu',tool:mp([0,'major']),how:['Uz 2. stīgas: ladi 1, 3, 5, 6, 8, 10, 12, 13.','Soļi starp notīm: tonis, tonis, pustonis, tonis, tonis, tonis, pustonis. Tā ir mažora formula.','Nosauc katru noti. Tad to pašu formulu sāc no G uz 1. stīgas 3. lada.']},
+ {id:'h3',b:'theory',st:1,t:'Pentatonika ar nosaukumiem',tool:mp([9,'minPent']),how:['A minora pentatonika, 1. pozīcija.','Spēlē lēni un pirms katras nots nosauc to: A, C, D, E, G.','Aizver acis un pasaki, uz kuras stīgas un lada ir katrs A.']},
+ {id:'h4',b:'theory',st:2,t:'Mažora pentatonika plus divas notis',tool:mp([0,'majPent',0,'d'],[0,'major',0,'d']),how:['C mažora pentatonika: C, D, E, G, A. Pakāpes 1, 2, 3, 5, 6.','Pieliec F (4) un B (7), un sanāk pilns C mažors.','Pārslēdz karti starp abām un atrodi jaunās notis katrā pozīcijā.']},
+ {id:'h5',b:'theory',st:2,t:'Minora pentatonika plus divas notis',tool:mp([9,'minPent',0,'d'],[9,'minor',0,'d']),how:['A minora pentatonika: A, C, D, E, G. Pakāpes 1, ♭3, 4, 5, ♭7.','Pieliec B (2) un F (♭6), un sanāk dabiskais A minors.','Spēlē pentatonikas frāzi un beigās apzināti trāpi uz B vai F.']},
+ {id:'h6',b:'theory',st:2,t:'Paralēlās tonalitātes',tool:mp([0,'major'],[9,'minor']),how:['C mažors un A minors sastāv no tām pašām notīm. Atšķiras tikai tas, kura nots ir mājas.','Minora pamattonis ir mažora 6. pakāpe: trīs ladus zem mažora pamattoņa.','Atrodi paralēlo minoru G, D, A un E mažoram: Em, Bm, F♯m, C♯m.']},
+ {id:'h7',b:'theory',st:2,t:'Intervāli no pamattoņa',tool:mp([0,'major',0,'d']),how:['Kartē C mažors ar pakāpēm.','No C uz 5. stīgas 3. lada atrodi katru pakāpi un nosauc intervālu: sekunda, terca, kvarta, kvinta, seksta, septima.','Lielā terca ir vienu stīgu augstāk un vienu ladu atpakaļ. Kvinta ir vienu stīgu augstāk un divus ladus tālāk.','Pārejā no 3. uz 2. stīgu viss nobīdās par vienu ladu tālāk.']},
+ {id:'h8',b:'theory',st:3,t:'Kā uzbūvēts trijskanis',tool:mp([0,'maj',0,'d'],[0,'min',0,'d']),how:['Trijskanis ir gammas 1., 3. un 5. pakāpe. C mažorā: C, E, G.','Mažora trijskanis: lielā terca (4 ladi) un virs tās mazā terca (3 ladi). Minorā otrādi.','Pārslēdz karti starp C un Cm. Mainās viena nots: E kļūst par E♭.']},
+ {id:'h9',b:'theory',st:3,t:'Apvērsumi uz 1-2-3 stīgām',tool:mp([0,'maj',1,'d'],[7,'maj',1,'d'],[2,'maj',1,'d']),how:['Trīs formas: pamatveids (basā pamattonis), 1. apvērsums (basā terca), 2. apvērsums (basā kvinta).','Spēlē visas pa grifu uz augšu un nosauc, kura nots ir basā.','Tas pats G un D mažoram.']},
+ {id:'h10',b:'theory',st:3,t:'Minora apvērsumi uz 1-2-3 stīgām',tool:mp([9,'min',1,'d'],[4,'min',1,'d'],[2,'min',1,'d']),how:['Tās pašas trīs formas A minoram.','Salīdzini ar mažora formām: terca ir vienu ladu zemāk.','Tas pats Em un Dm.']},
+ {id:'h11',b:'theory',st:3,t:'Apvērsumi uz 2-3-4 stīgām',tool:mp([0,'maj',2,'d'],[9,'min',2,'d']),how:['Tās pašas trīs formas vienu stīgu komplektu zemāk.','Formas izskatās citādi, jo starp 3. un 2. stīgu ir lielā terca, bet starp pārējām blakus stīgām kvarta.','Spēlē C mažoru un A minoru pa visu grifu.']},
+ {id:'h12',b:'theory',st:3,t:'Harmonizētā mažora gamma',tool:mp([0,'maj',1,'d'],[2,'min',1,'d'],[4,'min',1,'d'],[5,'maj',1,'d'],[7,'maj',1,'d'],[9,'min',1,'d'],[11,'dim',1,'d']),how:['Uz katras C mažora pakāpes uzbūvē trijskani: C, Dm, Em, F, G, Am, B°.','Spēlē tos pēc kārtas uz 1-2-3 stīgām pa grifu uz augšu.','Jebkurā mažorā secība ir tā pati: mažors, minors, minors, mažors, mažors, minors, pamazinātais.']},
+ {id:'h13',b:'theory',st:4,tool:{k:'circle',root:7,mode:'maj'},t:'Pakāpes ar romiešu cipariem',how:['I, IV un V ir mažora akordi. ii, iii un vi ir minora. vii° ir pamazinātais.','Nospēlē I–IV–V četrās tonalitātēs.','G: G, C, D. D: D, G, A. A: A, D, E. E: E, A, B.']},
+ {id:'h14',b:'theory',st:4,tool:{k:'circle',root:9,mode:'maj'},t:'I–IV–V un 12 taktu blūzs',how:['A tonalitātē: A A A A, D D A A, E D A E. Katrs burts ir viena takts.','Spēlē ar bugī rifu no tehnikas bloka.','Tas pats E tonalitātē: E E E E, A A E E, B A E B.']},
+ {id:'h15',b:'theory',st:4,t:'I–♭VII–IV',tool:mp([9,'mixo',0,'d']),how:['Mažorā 7. pakāpes akordu pazemina par pustoni. A tonalitātē tas ir G mažors.','Spēlē A–G–D, D–C–G un E–D–A.','Tā ir miksolīdiskā krāsa, ko tu jau zini: A miksolīdiskajā ir G, nevis G♯.']},
+ {id:'h16',b:'theory',st:4,t:'Minora progresijas',tool:mp([9,'minor',0,'d']),how:['Dabiskā A minora akordi bez pamazinātā: Am, C, Dm, Em, F, G.','Spēlē Am–F–G un Am–G–F.','Virs katra akorda spēlē A minora pentatoniku un klausies, kura nots uz tā skan stabili.']},
+ {id:'h17',b:'theory',st:4,t:'Mērķa notis',tool:mp([9,'min',0,'n'],[5,'maj',0,'n'],[7,'maj',0,'n']),how:['Progresija Am–F–G, katram akordam divas taktis.','Uz katras maiņas pirmā sitiena nospēlē jaunā akorda tercu: C, A, B.','Pa vidu spēlē ko gribi, bet uz maiņu trāpi precīzi.']},
+ {id:'h18',b:'theory',st:5,t:'Modi kā vienas nots atšķirība',tool:mp([4,'lydian',0,'d'],[4,'mixo',0,'d'],[4,'dorian',0,'d'],[4,'phrygian',0,'d']),how:['Līdiskais ir mažors ar ♯4. Miksolīdiskais ir mažors ar ♭7.','Doriskais ir minors ar lielo sekstu. Frīģiskais ir minors ar ♭2.','Pārslēdz karti starp visiem četriem no E un atrodi noti, kas mainās.']},
+ {id:'h19',b:'theory',st:5,t:'E līdiskais virs burdona',tool:mp([4,'lydian'],[4,'major']),how:['Ļauj skanēt atvērtai 6. stīgai.','Spēlē E līdisko un uzkavējies uz A♯.','Salīdzini ar parasto E mažoru, kur tajā vietā ir A.']},
+ {id:'h20',b:'theory',st:5,t:'A doriskais',tool:mp([9,'dorian'],[9,'minPent']),how:['Akordi Am un D, katram viena takts.','Raksturīgā nots ir F♯.','Spēlē A minora pentatoniku un pieliec B un F♯.']},
+ {id:'h21',b:'theory',st:5,t:'Raksturīgie akordu pāri',how:['Līdiskais: I–II, piemēram, E–F♯. Miksolīdiskais: I–♭VII, E–D.','Doriskais: i–IV, Em–A. Frīģiskais: i–♭II, Em–F.','Ieraksti katru pāri kā četru taktu cilpu un improvizē virs tā.']},
+ {id:'h22',b:'theory',st:5,t:'E frīģiskais',tool:mp([4,'phrygian'],[4,'minor']),how:['Atvērta 6. stīga kā burdons.','Raksturīgā nots ir F, pustoni virs pamattoņa.','Salīdzini ar dabisko E minoru, kur tajā vietā ir F♯.']},
+ {id:'h23',b:'theory',st:6,t:'Septakordi C mažorā',tool:mp([0,'maj7',0,'d'],[2,'min7',0,'d'],[7,'dom7',0,'d'],[11,'m7b5',0,'d']),how:['Trijskanim pieliec 7. pakāpi: Cmaj7, Dm7, Em7, Fmaj7, G7, Am7, Bm7♭5.','Katru spēlē kā arpedžo, pa vienai notij.','Klausies atšķirību starp Cmaj7 (lielā septima) un G7 (mazā septima).']},
+ {id:'h24',b:'theory',st:6,t:'Harmoniskais minors',tool:mp([9,'harmMinor'],[4,'phrygDom'],[4,'dom7']),how:['A harmoniskais minors atšķiras no dabiskā ar vienu noti: G♯.','G♯ ir E7 akorda terca. Spēlē Am–E7 un virs E7 trāpi uz G♯.','No E tā pati gamma ir E frīģiskais dominantais.']},
+ {id:'h25',b:'theory',st:6,t:'5/4 un 7/8',tool:{k:'metro',bpm:100,beats:5},how:['Metronomā pieci sitieni taktī. Skaiti 1-2-3, 1-2.','Spēlē rifu uz vienas nots, akcentējot 1. un 4. sitienu.','Tad septiņi sitieni: 1-2, 1-2, 1-2-3.']},
+ {id:'h26',b:'theory',st:6,tool:{k:'circle',root:0,mode:'maj'},t:'Aizņemtie akordi',how:['C mažorā paņem akordus no C minora: A♭ (♭VI), B♭ (♭VII), Fm (iv).','Spēlē C–A♭–B♭–C un C–Fm–C.','Klausies, kā aizņemtais akords uz brīdi maina krāsu un tad atgriežas.']},
+ /* --- Skaņdarbs --- */
+ {id:'r1',b:'rep',st:1,bpm:1,t:'Darbs pie skaņdarba',how:['Paņem vienu sadaļu, ne visu skaņdarbu.','Sāc ar 60–70 % no mērķa tempa. Grūtākās divas taktis atkārto cilpā.','Trīs tīras reizes pēc kārtas, tad pieliec 5 BPM.']},
+ /* --- Komponēšana --- */
+ {id:'c1',b:'comp',st:1,t:'Melodija uz vienas stīgas',how:['Tikai 2. stīga, tikai C mažora notis.','Četras taktis. Sāc uz E (5. lads), beidz uz C.','Pieraksti notis ar nosaukumiem.']},
+ {id:'c2',b:'comp',st:1,t:'Jautājums un atbilde',how:['A minora pentatonika. Divu taktu frāze, kas beidzas uz E vai G.','Divu taktu atbilde, kas beidzas uz A.','Nosauc abas beigu notis.']},
+ {id:'c3',b:'comp',st:1,t:'Trīs notis, pārējais ir ritms',how:['Izvēlies trīs notis no E minora pentatonikas uz 6. un 5. stīgas.','Uztaisi divu taktu rifu. Notis nemaini, maini tikai ritmu un pauzes.','Labākais variants ir tas, kuru var atpazīt pēc ritma vien.']},
+ {id:'c4',b:'comp',st:2,t:'Divas jaunās notis',how:['Četras taktis A minora pentatonikā.','Atkārto tās pašas četras taktis, bet divās vietās nomaini noti pret B vai F.','Pieraksti, kas mainījās noskaņā.']},
+ {id:'c5',b:'comp',st:2,t:'Mažora melodija ar plānu',how:['G mažors, astoņas taktis.','Sāc uz B (terca), 4. taktī apstājies uz D (kvinta), beidz uz G.','Pa vidu izmanto visas septiņas notis vismaz vienreiz.']},
+ {id:'c6',b:'comp',st:2,t:'Viena melodija, divas mājas',how:['Uzraksti četru taktu melodiju C mažorā virs C akorda.','Nospēlē tās pašas notis virs Am akorda.','Pielāgo beigu noti, lai tā justos kā mājas arī minorā.']},
+ {id:'c7',b:'comp',st:3,t:'Rifs no apvērsumiem',how:['Akordi C–G–Am–F uz 1-2-3 stīgām.','Katram akordam izvēlies formu, kas ir vistuvāk iepriekšējai.','Pieliec ritmu un nospēlē kā četru taktu rifu.']},
+ {id:'c8',b:'comp',st:3,t:'Melodija pa akorda skaņām',how:['Progresija Am–F–C–G, katram akordam viena takts.','Uz 1. un 3. sitiena tikai akorda skaņas: pamattonis, terca vai kvinta.','Pārējos sitienos jebkura A minora nots.']},
+ {id:'c9',b:'comp',st:3,t:'Trijskanis virs basa nots',how:['Ļauj skanēt atvērtai 5. stīgai (A).','Virs tās spēlē G, A un D mažora trijskaņus uz 2-3-4 stīgām.','Izvēlies secību, kas patīk, un uztaisi četru taktu ievadu.']},
+ {id:'c10',b:'comp',st:4,tool:{k:'circle',root:9,mode:'maj'},t:'Trīs akordi, divi rifi',how:['A tonalitāte, tikai A, D un E.','Panta rifs: zems, ar klusināšanu. Piedziedājuma rifs: atvērti akordi.','Ieraksti abus pēc kārtas.']},
+ {id:'c11',b:'comp',st:4,tool:{k:'circle',root:9,mode:'maj'},t:'Rifs uz I–♭VII–IV',how:['Akordi A–G–D ar atvērtajām stīgām.','Divu taktu rifs, kur akords mainās astotdaļu pirms sitiena.','Virsū četru taktu melodija A miksolīdiskajā.']},
+ {id:'c12',b:'comp',st:4,tool:{k:'circle',root:9,mode:'min'},t:'Minora progresija ar mērķi',how:['Am–F–G, katram akordam divas taktis.','Melodija, kas katrā maiņā trāpa uz akorda tercas: C, A, B.','Ieraksti akordus un melodiju atsevišķi.']},
+ {id:'c13',b:'comp',st:4,t:'Solo ar plānu',how:['Paņem savu rifu no šī posma.','Astoņu taktu solo: divas taktis zemu, divas vidū, divas augstu, divas atpakaļ uz pamattoni.','Katras daļas pirmā nots ir akorda skaņa.']},
+ {id:'c14',b:'comp',st:5,t:'Līdiskā ainava',how:['Atvērta 6. stīga kā burdons.','Astoņas taktis E līdiskajā. A♯ parādās vismaz trīs reizes kā gara nots.','Lēns temps, daudz vietas starp frāzēm.']},
+ {id:'c15',b:'comp',st:5,t:'Viena bāze, divi modi',how:['E burdons. Četras taktis E līdiskajā, četras E miksolīdiskajā.','Pārejā izmanto notis, kas abos modos ir kopīgas.','Šo pieeju Satriani dēvē par pitch axis.']},
+ {id:'c16',b:'comp',st:5,t:'Doriskais grūvs',how:['Cilpa Am7–D7, katram akordam viena takts.','Rifs un četru taktu melodija, kurā F♯ trāpa uz D7 akorda.','Temps ap 90 BPM.']},
+ {id:'c17',b:'comp',st:5,t:'Frīģiskais rifs',how:['E frīģiskais uz 6. un 5. stīgas.','Smags rifs ar klusināšanu, kur akcentētā nots ir F (6. stīgas 1. lads).','Otrajā reizē beigās pieliec F akordu.']},
+ {id:'c18',b:'comp',st:6,t:'Arpedžo tēma',how:['Cmaj7–Am7–Fmaj7–G7, katram akordam viena takts.','Melodija tikai no akordu skaņām.','Katrā maiņā pārej uz tuvāko nākamā akorda noti.']},
+ {id:'c19',b:'comp',st:6,tool:{k:'metro',bpm:100,beats:5},t:'Rifs 5/4 metrā',how:['Metronomā pieci sitieni taktī.','Divu taktu rifs ar dalījumu 3+2.','Otrajā taktī apmaini dalījumu uz 2+3.']},
+ {id:'c20',b:'comp',st:6,tool:{k:'circle',root:0,mode:'maj'},t:'Aizņemtais akords',how:['Progresija C mažorā ar vienu akordu no C minora: A♭, B♭ vai Fm.','Četras taktis. Aizņemtais akords ir trešajā taktī.','Melodijā virs tā izmanto noti, kuras C mažorā nav.']},
+ {id:'c21',b:'comp',st:6,t:'Kulminācija ar G♯',how:['Am–Dm–E7–Am.','Melodija A minorā, bet virs E7 izmanto G♯.','Frāzes augstākā nots ir G♯ vai nots uzreiz pēc tās.']}
+];
+const EXM=Object.fromEntries(EX.map(e=>[e.id,e]));
+
+/* ================= 3. Helpers, state, storage ================= */
+const $=(s,r)=>(r||document).querySelector(s);
+const $$=(s,r)=>Array.from((r||document).querySelectorAll(s));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>{d=d||new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+const parseYmd=s=>{const a=s.split('-').map(Number);return new Date(a[0],a[1]-1,a[2])};
+const dayNum=s=>{const a=s.split('-').map(Number);return Math.round(Date.UTC(a[0],a[1]-1,a[2])/864e5)};
+const addDays=(s,n)=>{const d=parseYmd(s);d.setDate(d.getDate()+n);return ymd(d)};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const rand=n=>Math.floor(Math.random()*n);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const dec=(x,n)=>x.toFixed(n==null?1:n).replace('.',',');
+const WD=['svētdiena','pirmdiena','otrdiena','trešdiena','ceturtdiena','piektdiena','sestdiena'];
+const WDS=['Sv','P','O','T','C','Pk','S'];
+const MON=['janvāris','februāris','marts','aprīlis','maijs','jūnijs','jūlijs','augusts','septembris','oktobris','novembris','decembris'];
+const shortDate=s=>{const d=parseYmd(s);return d.getDate()+'.'+(d.getMonth()+1)+'.'};
+
+const LS='gitaras-stunda.v1', LSP='gitaras-stunda.pending', LSU='gitaras-stunda.ui';
+const DEF=()=>({goal:60,stage:1,picks:{},checks:{},trainer:{},metro:{bpm:80,beats:4,vol:0.7},tr:{strings:[1,1,0,0,0,0],maxFret:12,acc:false,mode:'name'},updatedAt:0});
+let S={settings:DEF(),works:{pieces:[],ideas:[],updatedAt:0},logs:{}};
+let AGG=null;
+function lsGet(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function lsDel(k){try{localStorage.removeItem(k)}catch(e){}}
+function normSettings(o){const d=DEF();o=Object.assign(d,o||{});o.metro=Object.assign(DEF().metro,o.metro||{});o.tr=Object.assign(DEF().tr,o.tr||{});
+  if(!Array.isArray(o.tr.strings)||o.tr.strings.length!==6)o.tr.strings=DEF().tr.strings;
+  ['picks','checks','trainer'].forEach(k=>{if(!o[k]||typeof o[k]!=='object')o[k]={}});
+  o.stage=clamp(o.stage|0,1,STAGES.length);o.goal=[30,45,60,90].includes(o.goal)?o.goal:60;return o}
+function normWorks(o){o=Object.assign({pieces:[],ideas:[],updatedAt:0},o||{});if(!Array.isArray(o.pieces))o.pieces=[];if(!Array.isArray(o.ideas))o.ideas=[];return o}
+function loadLocal(){const v=lsGet(LS);if(!v)return;S.settings=normSettings(v.settings);S.works=normWorks(v.works);S.logs=(v.logs&&typeof v.logs==='object')?v.logs:{}}
+function saveLocal(){lsSet(LS,S)}
+function mergeLog(month,entries){const cur=S.logs[month]||(S.logs[month]=[]);const ids=new Set(cur.map(e=>e.id));let added=0;
+  for(const e of entries||[]){if(e&&e.id&&!ids.has(e.id)&&typeof e.s==='number'){cur.push(e);ids.add(e.id);added++}}
+  if(added){cur.sort((a,b)=>a.t-b.t);AGG=null}return added}
+
+/* --- cloud: private per-viewer documents in the artifact's db --- */
+const Cloud={col:null,status:'init',dirty:new Set(),busy:false,timer:null};
+const SYNC_TXT={init:'Savienojas ar kontu…',local:'Dati glabājas šajā ierīcē. Sinhronizācija starp ierīcēm vēl nav ieslēgta, tāpēc ik pa laikam eksportē rezerves kopiju.',ok:'Dati saglabāti tavā Claude kontā un pieejami arī citās ierīcēs.',saving:'Saglabā…',error:'Neizdevās saglabāt kontā. Dati ir šajā pārlūkā, nākamais mēģinājums būs pie nākamajām izmaiņām.'};
+function setSync(s){Cloud.status=s;$$('[data-sync]').forEach(el=>el.textContent=SYNC_TXT[s])}
+function markDirty(k){if(k==='settings')S.settings.updatedAt=Date.now();if(k==='works')S.works.updatedAt=Date.now();
+  saveLocal();if(!Cloud.col)return;Cloud.dirty.add(k);clearTimeout(Cloud.timer);Cloud.timer=setTimeout(flush,2000)}
+async function writeDoc(k){const ref=Cloud.col.doc(k);let body;
+  if(k==='settings')body=S.settings;else if(k==='works')body=S.works;
+  else{const m=k.slice(4);const r=await ref.get();if(r.exists){const d=r.data();if(mergeLog(m,clone(d.entries||[])))saveLocal()}body={entries:S.logs[m]||[]}}
+  try{await ref.set(clone(body))}catch(e){if(e&&e.code==='unavailable'){await new Promise(r=>setTimeout(r,700+rand(600)));await ref.set(clone(body))}else throw e}}
+async function flush(){if(Cloud.busy||!Cloud.col)return;Cloud.busy=true;setSync('saving');let k=null;
+  try{while(Cloud.dirty.size){k=Cloud.dirty.values().next().value;Cloud.dirty.delete(k);await writeDoc(k)}setSync('ok')}
+  catch(e){if(k)Cloud.dirty.add(k);setSync('error')}
+  Cloud.busy=false}
+async function cloudInit(){
+  try{
+    if(!window.claude||!window.claude.use){setSync('local');return}
+    const [db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')]);
+    const id=user?await user.id():null;
+    if(!db||!id){setSync('local');return}
+    const col=db.collection('data/users/'+id);
+    const snap=await col.get();
+    const seen=new Set();let changed=false;
+    for(const d of snap.docs){seen.add(d.id);const data=clone(d.data()||{});
+      if(d.id==='settings'){if((data.updatedAt||0)>(S.settings.updatedAt||0)){S.settings=normSettings(data);changed=true}else if((S.settings.updatedAt||0)>(data.updatedAt||0))Cloud.dirty.add('settings')}
+      else if(d.id==='works'){if((data.updatedAt||0)>(S.works.updatedAt||0)){S.works=normWorks(data);changed=true}else if((S.works.updatedAt||0)>(data.updatedAt||0))Cloud.dirty.add('works')}
+      else if(d.id.indexOf('log-')===0){const m=d.id.slice(4);const before=(S.logs[m]||[]).length;const added=mergeLog(m,data.entries||[]);if(added)changed=true;if(before+added>(data.entries||[]).length)Cloud.dirty.add(d.id)}}
+    if(!seen.has('settings')&&S.settings.updatedAt)Cloud.dirty.add('settings');
+    if(!seen.has('works')&&S.works.updatedAt)Cloud.dirty.add('works');
+    for(const m of Object.keys(S.logs))if(!seen.has('log-'+m)&&S.logs[m].length)Cloud.dirty.add('log-'+m);
+    Cloud.col=col;
+    if(changed){AGG=null;saveLocal();M.bpm=S.settings.metro.bpm;M.beats=S.settings.metro.beats;M.vol=S.settings.metro.vol;if(!R.open)render()}
+    if(Cloud.dirty.size)flush();else setSync('ok');
+  }catch(e){setSync(Cloud.col?'error':'local')}
+}
+
+/* --- derived data --- */
+function allEntries(){const out=[];for(const m of Object.keys(S.logs))for(const e of S.logs[m])out.push(e);return out.sort((a,b)=>a.t-b.t)}
+function agg(){if(AGG)return AGG;const days=new Map();
+  for(const e of allEntries()){let d=days.get(e.d);if(!d){d={total:0,by:{}};days.set(e.d,d)}d.total+=e.s;d.by[e.b]=(d.by[e.b]||0)+e.s}
+  return AGG=days}
+function addLog(e){const m=e.d.slice(0,7);(S.logs[m]||(S.logs[m]=[])).push(e);AGG=null;markDirty('log-'+m)}
+function targets(){const g=S.settings.goal,tw=BLOCKS.reduce((a,b)=>a+b.w,0);let left=g;
+  return BLOCKS.map((b,i)=>{const m=i===BLOCKS.length-1?left:Math.round(g*b.w/tw);left-=m;return m})}
+function todayBy(){const d=agg().get(ymd());return d?d.by:{}}
+function streaks(){const t=agg(),g=S.settings.goal*60,hit=d=>((t.get(d)||{}).total||0)>=g;
+  let cur=0,d=ymd();if(!hit(d))d=addDays(d,-1);while(hit(d)){cur++;d=addDays(d,-1)}
+  let best=0,run=0,prev=null;
+  for(const k of Array.from(t.keys()).sort()){if(!hit(k)){continue}run=(prev&&dayNum(k)-dayNum(prev)===1)?run+1:1;prev=k;if(run>best)best=run}
+  return {cur,best:Math.max(best,cur)}}
+function pool(b){const st=S.settings.stage;let p=EX.filter(e=>e.b===b&&((b==='theory'||b==='comp')?e.st===st:e.st<=st));
+  if(!p.length)p=EX.filter(e=>e.b===b&&e.st<=st);return p}
+function exFor(b){const p=pool(b),d=ymd();if(S.settings.picks.d!==d)S.settings.picks={d};
+  let e=p.find(x=>x.id===S.settings.picks[b]);
+  if(!e){const off={tech:0,fret:3,theory:1,rep:0,comp:2}[b]||0;e=p[(dayNum(d)+off)%p.length]}
+  return e}
+function activePiece(){return S.works.pieces.find(p=>p.active)||S.works.pieces[0]||null}
+function bestBpm(key){let best=0;for(const e of allEntries()){if(e.bpm&&(e.ex+(e.p?':'+e.p:''))===key&&e.bpm>best)best=e.bpm}return best}
+
+/* ================= 4. Audio ================= */
+const A={ctx:null};
+function actx(){try{if(!A.ctx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;A.ctx=new C()}
+  if(A.ctx.state==='suspended')A.ctx.resume();return A.ctx}catch(e){return null}}
+function blip(t,freq,dur,vol,type){const c=A.ctx,o=c.createOscillator(),g=c.createGain();o.type=type||'sine';o.frequency.value=freq;
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.002);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+dur+0.02)}
+function pluck(midi){pluckAt(midi,0,1,0.2)}
+function pluckAt(midi,delay,dur,vol){const c=actx();if(!c)return;const t=c.currentTime+delay,f=440*Math.pow(2,(midi-69)/12);
+  const o=c.createOscillator(),g=c.createGain(),lp=c.createBiquadFilter();o.type='sawtooth';o.frequency.value=f;
+  lp.type='lowpass';lp.frequency.setValueAtTime(Math.min(f*7,7000),t);lp.frequency.exponentialRampToValueAtTime(Math.max(f*1.5,350),t+0.5);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.006);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(lp);lp.connect(g);g.connect(c.destination);o.start(t);o.stop(t+dur+0.05)}
+function strum(c,dur){const base=48+c.pc,ms=[base];spellL(LET.indexOf(c.root[0]),c.pc,c.s7&&c.q7?c.q7:c.q).slice(1).forEach(t=>ms.push(base+((t.pc-c.pc+12)%12)));ms.push(base+12);
+  ms.forEach((m,i)=>pluckAt(m,i*0.03,dur||1.8,0.12))}
+function chime(){const c=actx();if(!c)return;const t=c.currentTime;[659.25,880,1318.5].forEach((f,i)=>blip(t+i*0.15,f,0.6,0.16,'triangle'))}
+
+const M={on:false,bpm:80,beats:4,vol:0.7,next:0,beat:0,timer:null,worker:null,subs:new Set(),taps:[]};
+function mSched(){const c=A.ctx;if(!M.on||!c)return;
+  while(M.next<c.currentTime+0.15){const b=M.beat,t=M.next;
+    if(M.vol>0.005)blip(t,b===0?1760:1174.7,0.05,(b===0?0.5:0.3)*M.vol*1.4,'triangle');
+    setTimeout(()=>{if(M.on)mBeat(b)},Math.max(0,(t-c.currentTime)*1000));
+    M.next+=60/M.bpm;M.beat=(b+1)%M.beats}}
+function mStart(){const c=actx();if(!c){toast('Šajā pārlūkā skaņa nav pieejama.');return}
+  M.on=true;M.beat=0;M.next=c.currentTime+0.08;
+  try{if(!M.worker){const src='var t=null;onmessage=function(e){clearInterval(t);t=null;if(e.data==="start")t=setInterval(function(){postMessage(0)},25)}';
+      M.worker=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));M.worker.onmessage=mSched;M.worker.onerror=function(){M.worker=null}}
+    M.worker.postMessage('start')}catch(e){M.worker=null}
+  clearInterval(M.timer);M.timer=setInterval(mSched,25);mSched();mSync()}
+function mStop(){M.on=false;clearInterval(M.timer);M.timer=null;try{if(M.worker)M.worker.postMessage('stop')}catch(e){}mSync()}
+function mBeat(b){$$('.m-dots').forEach(w=>{Array.from(w.children).forEach((d,i)=>d.classList.toggle('hit',i===b))});M.subs.forEach(fn=>fn(b))}
+function setBpm(v,quiet){M.bpm=clamp(Math.round(v)||80,30,260);S.settings.metro.bpm=M.bpm;if(!quiet)markDirty('settings');mSync()}
+function setBeats(v){M.beats=clamp(v|0,2,7);if(M.beat>=M.beats)M.beat=0;S.settings.metro.beats=M.beats;markDirty('settings');mSync(true)}
+function setVol(v){M.vol=clamp(Math.round(v),0,100)/100;S.settings.metro.vol=M.vol;markDirty('settings');mSync()}
+function volPreview(){if(M.on||M.vol<=0.005)return;const c=actx();if(c)blip(c.currentTime+0.01,1760,0.05,0.5*M.vol*1.4,'triangle')}
+function mTap(){const t=performance.now();M.taps=M.taps.filter(x=>t-x<2500);M.taps.push(t);
+  if(M.taps.length>=2){const n=Math.min(M.taps.length,5),a=M.taps.slice(-n);setBpm(60000/((a[n-1]-a[0])/(n-1)))}}
+function mSync(redots){
+  $$('[data-m="bpm"]').forEach(e=>e.textContent=M.bpm);
+  {const ang=kAng(M.bpm);$$('[data-m="knobrot"]').forEach(e=>e.style.transform='rotate('+ang.toFixed(1)+'deg)');
+   $$('[data-m="knobarc"]').forEach(e=>e.setAttribute('d',arc(60,60,45,-135,Math.max(-134.5,ang))));$$('[data-knob]').forEach(e=>e.setAttribute('aria-valuenow',M.bpm))}
+  $$('[data-m="toggle"]').forEach(e=>{e.textContent=M.on?'Apturēt':'Sākt';e.setAttribute('aria-pressed',M.on)});
+  $$('[data-m="beats"]').forEach(e=>e.value=M.beats);
+  $$('[data-m="vol"]').forEach(e=>{if(document.activeElement!==e)e.value=Math.round(M.vol*100)});
+  $$('[data-m="volv"]').forEach(e=>e.textContent=Math.round(M.vol*100)+' %');
+  $$('[data-m="bpmbtn"]').forEach(e=>e.textContent='Ierakstīt '+M.bpm+' BPM');
+  $$('.m-dots').forEach(w=>{if(redots||w.children.length!==M.beats)w.innerHTML='<i></i>'.repeat(M.beats);if(!M.on)Array.from(w.children).forEach(d=>d.classList.remove('hit'))})}
+const KMIN=30,KMAX=260,kAng=v=>-135+(v-KMIN)/(KMAX-KMIN)*270;
+function knobSVG(p){let t='';for(let i=0;i<=23;i++){const a=(-135+i*270/23-90)*Math.PI/180,r1=i%23===0?49:52;
+    t+=`<line x1="${(60+r1*Math.cos(a)).toFixed(1)}" y1="${(60+r1*Math.sin(a)).toFixed(1)}" x2="${(60+57*Math.cos(a)).toFixed(1)}" y2="${(60+57*Math.sin(a)).toFixed(1)}"/>`}
+  const ang=kAng(M.bpm);
+  return `<svg viewBox="0 0 120 120" aria-hidden="true"><defs>
+    <radialGradient id="${p}-kb" cx="50%" cy="32%" r="70%"><stop offset="0" stop-color="#3B2F26"/><stop offset="1" stop-color="#0D0906"/></radialGradient>
+    <radialGradient id="${p}-kc" cx="38%" cy="30%" r="85%"><stop offset="0" stop-color="#FCE6B6"/><stop offset=".5" stop-color="#D49A45"/><stop offset="1" stop-color="#6E4519"/></radialGradient></defs>
+    <g stroke="var(--muted)" stroke-width="1.4" stroke-linecap="round" opacity=".75">${t}</g>
+    <path data-m="knobarc" d="${arc(60,60,45,-135,Math.max(-134.5,ang))}" fill="none" stroke="var(--brass)" stroke-width="3" stroke-linecap="round" style="filter:drop-shadow(0 0 4px var(--glow))"/>
+    <circle cx="60" cy="60" r="39" fill="url(#${p}-kb)" stroke="#000" stroke-opacity=".7" stroke-width="1.5"/>
+    <g data-m="knobrot" style="transform-origin:60px 60px;transform:rotate(${ang.toFixed(1)}deg)">
+      <circle cx="60" cy="60" r="36.5" fill="none" stroke="#5C4735" stroke-width="3" stroke-dasharray="1.4 2.4"/>
+      <line x1="60" y1="25" x2="60" y2="37" stroke="var(--brass-hi)" stroke-width="3.2" stroke-linecap="round"/>
+    </g>
+    <circle cx="60" cy="60" r="21" fill="url(#${p}-kc)" stroke="#2A1A0A" stroke-opacity=".6"/>
+  </svg>`}
+function metroHTML(p){return `<div class="metro card">
+  <div class="m-head">
+    <div class="knob" data-knob role="slider" tabindex="0" aria-label="Temps, BPM" aria-valuemin="${KMIN}" aria-valuemax="${KMAX}" aria-valuenow="${M.bpm}">${knobSVG(p)}</div>
+    <div class="m-read">
+      <div class="m-bpm"><b data-m="bpm">${M.bpm}</b><small>BPM</small></div>
+      <div class="m-steps">${[-5,-1,1,5].map(d=>`<button class="m-step" data-act="m-step" data-d="${d}" aria-label="${d>0?'Plus':'Mīnus'} ${Math.abs(d)} BPM">${d>0?'+'+d:'−'+(-d)}</button>`).join('')}</div>
+    </div>
+  </div>
+  <div class="m-bot">
+    <div class="m-dots" aria-hidden="true">${'<i></i>'.repeat(M.beats)}</div>
+    <select class="sel" id="${p}-beats" data-m="beats" data-on="m-beats" aria-label="Sitieni taktī">${[2,3,4,5,6,7].map(n=>`<option value="${n}"${n===M.beats?' selected':''}>${n} sitieni taktī</option>`).join('')}</select>
+    <button class="btn" data-act="m-tap">Tap</button>
+    <button class="btn solid" data-act="m-toggle" data-m="toggle" aria-pressed="${M.on}">${M.on?'Apturēt':'Sākt'}</button>
+  </div>
+  <label class="m-vol" for="${p}-vol"><span>Skaļums</span><input id="${p}-vol" type="range" min="0" max="100" step="1" value="${Math.round(M.vol*100)}" data-m="vol" data-on="m-vol"><span class="num" data-m="volv">${Math.round(M.vol*100)} %</span></label>
+</div>`}
+
+/* ================= 5. Fretboard ================= */
+function fbKeep(host,html){const w=$('.fbwrap',host),sl=w?w.scrollLeft:0;host.innerHTML=html;const n=$('.fbwrap',host);if(!n)return;n.scrollLeft=sl;
+  const d=$('.d-q,.d-bad,.d-ok',n);if(d){const a=d.getBoundingClientRect(),b=n.getBoundingClientRect();if(a.left<b.left+8||a.right>b.right-8)n.scrollLeft+=a.left-b.left-(b.width-a.width)/2}}
+let FBN=0;
+function fbSVG(o){
+  const W=40,SY=27,pL=24,pT=14,pB=30,pR=8,lo=o.lo||0,hi=o.hi,cols=hi-lo+1,id='fb'+(++FBN);
+  const w=pL+cols*W+pR,h=pT+5*SY+pB,X=f=>pL+(f-lo+1)*W,cx=f=>X(f)-W/2,y=i=>pT+(5-i)*SY,mid=pT+2.5*SY,on=o.on||[1,1,1,1,1,1];
+  const bx=pL,by=pT-11,bw=cols*W,bh=5*SY+22;
+  let s=`<svg class="fb" viewBox="0 0 ${w} ${h}" style="min-width:${Math.round(w*.8)}px" role="img" aria-label="${esc(o.label||'Ģitāras grifs')}">
+    <defs><clipPath id="${id}c"><rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="5"/></clipPath>
+    <radialGradient id="${id}p" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".6" stop-color="var(--fb-inlay)"/><stop offset="1" stop-color="#9C9384"/></radialGradient></defs>
+    <g clip-path="url(#${id}c)"><rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="#120C08"/>
+      <image href="img/ebony.webp" x="${bx}" y="${by}" width="${bw}" height="${bh}" preserveAspectRatio="xMidYMid slice"/>
+      <rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="#000" fill-opacity=".12"/></g>`;
+  for(let f=lo;f<=hi;f++){
+    if([3,5,7,9,15,17,19,21].includes(f))s+=`<circle cx="${cx(f)}" cy="${mid}" r="5" fill="url(#${id}p)" opacity=".9"/>`;
+    if(f===12)s+=`<circle cx="${cx(f)}" cy="${mid-SY}" r="5" fill="url(#${id}p)" opacity=".9"/><circle cx="${cx(f)}" cy="${mid+SY}" r="5" fill="url(#${id}p)" opacity=".9"/>`;
+    if(f===0)s+=`<rect x="${X(0)-3}" y="${by}" width="6" height="${bh}" fill="var(--fb-nut)"/><rect x="${X(0)+3}" y="${by}" width="2" height="${bh}" fill="#000" fill-opacity=".35"/>`;
+    else if(f<hi)s+=`<line x1="${X(f)+1.3}" x2="${X(f)+1.3}" y1="${by}" y2="${by+bh}" stroke="#000" stroke-opacity=".5" stroke-width="1.6"/><line x1="${X(f)}" x2="${X(f)}" y1="${by}" y2="${by+bh}" stroke="var(--fb-fret)" stroke-width="1.8"/>`;
+    if([0,3,5,7,9,12,15].includes(f))s+=`<text class="lab" x="${cx(f)}" y="${h-7}" text-anchor="middle">${f}</text>`;
+  }
+  for(let i=0;i<6;i++){const sw=(2.7-i*0.33).toFixed(2),op=on[i]?1:.3;
+    s+=`<line x1="${bx}" x2="${bx+bw}" y1="${y(i)+1.4}" y2="${y(i)+1.4}" stroke="#000" stroke-opacity="${.45*op}" stroke-width="${sw}"/>`;
+    s+=`<line x1="${bx}" x2="${bx+bw}" y1="${y(i)}" y2="${y(i)}" stroke="var(--fb-${i<3?'wound':'string'})" stroke-width="${sw}" opacity="${op}"/>`;
+    s+=`<text class="lab" x="10" y="${y(i)+3.5}" text-anchor="middle">${STR_NAME[i]}</text>`;
+  }
+  if(o.barre)s+=`<rect x="${cx(o.barre.f)-6}" y="${y(5)-6}" width="12" height="${y(o.barre.from)-y(5)+12}" rx="6" fill="var(--fb-dot)" fill-opacity=".28"/>`;
+  for(const i of o.mute||[])s+=`<text class="mute" x="${cx(lo)}" y="${y(i)}" dy=".36em">×</text>`;
+  for(const sh of o.shapes||[])s+=`<polyline class="shape" points="${sh.map(c=>cx(c.f)+','+y(c.s)).join(' ')}"/>`;
+  for(const d of o.dots||[])s+=`<g class="d d-${d.cls||'tone'}"><circle cx="${cx(d.f)}" cy="${y(d.s)}" r="10.5"/><text x="${cx(d.f)}" y="${y(d.s)}" dy=".36em">${esc(d.label||'')}</text></g>`;
+  if(o.hit)for(let i=0;i<6;i++)for(let f=lo;f<=hi;f++)s+=`<rect class="hit" x="${X(f)-W}" y="${y(i)-SY/2}" width="${W}" height="${SY}" data-act="${o.hit}" data-s="${i}" data-f="${f}"/>`;
+  return s+'</svg>'}
+
+/* ================= 6. Trainer ================= */
+const TR={host:null,metro:true,q:null,score:{n:0,ok:0,ms:0,streak:0},lock:false,beats:0,show:false,timer:null};
+const trCfg=()=>S.settings.tr;
+const pickName=pc=>SHARP[pc].length===1?SHARP[pc]:(Math.random()<.5?SHARP[pc]:FLAT[pc]);
+function trCells(){const c=trCfg(),out=[];for(let i=0;i<6;i++){if(!c.strings[i])continue;
+  for(let f=0;f<=c.maxFret;f++){const pc=(TUNE[i]+f)%12;if(!c.acc&&SHARP[pc].length>1)continue;out.push({s:i,f,pc})}}return out}
+function trWeight(c){const st=S.settings.trainer[c.s+'-'+c.f];return st?1+3*(1-st[1])+Math.min(st[2]/1000,6)/2:4}
+function trNext(){clearTimeout(TR.timer);TR.lock=false;const c=trCfg();
+  if(c.mode==='drill'){const pcs=[];for(let p=0;p<12;p++){if((c.acc||SHARP[p].length===1)&&!(TR.q&&TR.q.pc===p))pcs.push(p)}
+    const pc=pcs[rand(pcs.length)];TR.q={pc,name:pickName(pc)};TR.beats=0;TR.show=false;return trRender()}
+  let cells=trCells();const prev=TR.q&&TR.q.cell;
+  if(prev&&cells.length>1)cells=cells.filter(x=>!(x.s===prev.s&&x.f===prev.f));
+  if(!cells.length){TR.q=null;return trRender()}
+  let tot=0;const ws=cells.map(x=>{const w=trWeight(x);tot+=w;return w});let r=Math.random()*tot,i=0;while(i<cells.length-1&&(r-=ws[i])>0)i++;
+  const cell=cells[i];TR.q={cell,pc:cell.pc,name:pickName(cell.pc),t0:performance.now(),fb:null};trRender()}
+function trAnswer(ok,tap){if(TR.lock||!TR.q||!TR.q.cell)return;TR.lock=true;const q=TR.q,ms=Math.min(15000,performance.now()-q.t0);
+  const k=q.cell.s+'-'+q.cell.f,st=S.settings.trainer[k],v=ok?1:0;
+  S.settings.trainer[k]=st?[st[0]+1,Math.round((st[1]*.75+v*.25)*1000)/1000,Math.round(st[2]*.75+ms*.25)]:[1,v,Math.round(ms)];
+  const sc=TR.score;sc.n++;sc.ms+=ms;if(ok){sc.ok++;sc.streak++}else sc.streak=0;
+  q.fb={ok,tap};pluck(TUNE[q.cell.s]+q.cell.f);markDirty('settings');trRender();TR.timer=setTimeout(trNext,ok?650:1700)}
+function trRender(){const host=TR.host;if(!host||!host.isConnected)return;const c=trCfg(),q=TR.q;
+  let body='';
+  if(c.mode==='drill'){
+    const dots=TR.show&&q?ALLSTR.flatMap(i=>{const o=[];for(let f=0;f<=12;f++)if((TUNE[i]+f)%12===q.pc)o.push({s:i,f,cls:'root',label:q.name});return o}):[];
+    body=`<div class="tr-big" aria-live="polite">${q?esc(q.name):''}</div>
+      <p class="tr-score" style="text-align:center">Nospēlē uz katras stīgas no 6. līdz 1., viena nots uz sitienu. Sitiens <span class="num" data-tr="beat">${TR.beats||0}</span> no 8.</p>
+      <div class="row" style="justify-content:center"><button class="btn sm" data-act="tr-show">${TR.show?'Paslēpt atbildi':'Rādīt, kur tā ir'}</button><button class="btn sm" data-act="tr-skip">Nākamā nots</button></div>
+      ${TR.show?`<div class="fbwrap">${fbSVG({hi:12,dots,label:'Nots '+(q?q.name:'')+' uz grifa'})}</div>`:''}
+      ${TR.metro?metroHTML('trm'):''}`;
+  }else if(!q){
+    body=`<p class="empty">Izvēlies vismaz vienu stīgu.</p>`;
+  }else{
+    const dots=[];let prompt;
+    const stNo=6-q.cell.s;
+    if(c.mode==='name'){
+      if(q.fb){dots.push({s:q.cell.s,f:q.cell.f,cls:q.fb.ok?'ok':'bad',label:q.name});prompt=q.fb.ok?`<span class="ok">Pareizi: ${esc(BOTH[q.pc])}</span>`:`<span class="bad">Tā ir ${esc(BOTH[q.pc])}</span>`}
+      else{dots.push({s:q.cell.s,f:q.cell.f,cls:'q',label:'?'});prompt='Kāda nots ir šeit?'}
+    }else{
+      if(q.fb){for(let f=0;f<=c.maxFret;f++)if((TUNE[q.cell.s]+f)%12===q.pc)dots.push({s:q.cell.s,f,cls:'ok',label:q.name});
+        if(!q.fb.ok&&q.fb.tap)dots.push({s:q.fb.tap.s,f:q.fb.tap.f,cls:'bad',label:SHARP[(TUNE[q.fb.tap.s]+q.fb.tap.f)%12]});
+        prompt=q.fb.ok?`<span class="ok">Pareizi</span>`:`<span class="bad">Garām. ${esc(q.name)} uz ${stNo}. stīgas ir šeit.</span>`}
+      else prompt=`Atrodi ${esc(q.name)} uz ${stNo}. stīgas`;
+    }
+    const names=[];for(let p=0;p<12;p++)if(c.acc||SHARP[p].length===1)names.push(p);
+    body=`<div class="tr-q" aria-live="polite">${prompt}</div>
+      <div class="fbwrap">${fbSVG({hi:c.maxFret,dots,on:c.strings,hit:c.mode==='find'&&!q.fb?'tr-hit':null})}</div>
+      ${c.mode==='name'?`<div class="tr-ans">${names.map(p=>`<button data-act="tr-pick" data-pc="${p}">${BOTH[p]}</button>`).join('')}</div>`:''}
+      <p class="tr-score">${TR.score.n?`${TR.score.ok} no ${TR.score.n} pareizi · vidēji ${dec(TR.score.ms/TR.score.n/1000)} s · sērija ${TR.score.streak}`:'Atbildes un reakcijas laiks krājas pie katras grifa vietas atsevišķi.'}</p>`;
+  }
+  fbKeep(host,`<div class="stack-v">
+    <div class="opts">
+      <div class="seg" role="group" aria-label="Režīms">${[['name','Nosauc'],['find','Atrodi'],['drill','Ar ģitāru']].map(([k,n])=>`<button data-act="tr-mode" data-v="${k}" aria-pressed="${c.mode===k}">${n}</button>`).join('')}</div>
+      ${c.mode!=='drill'?`<div class="strs" role="group" aria-label="Stīgas">${[0,1,2,3,4,5].map(i=>`<button data-act="tr-str" data-i="${i}" aria-pressed="${!!c.strings[i]}" aria-label="${6-i}. stīga">${6-i}</button>`).join('')}</div>
+      <div class="seg" role="group" aria-label="Ladi">${[[5,'0–5'],[12,'0–12']].map(([k,n])=>`<button data-act="tr-fret" data-v="${k}" aria-pressed="${c.maxFret===k}">${n}</button>`).join('')}</div>`:''}
+      <div class="seg" role="group" aria-label="Diēzi un bemoli"><button data-act="tr-acc" aria-pressed="${!!c.acc}">Ar ♯ un ♭</button></div>
+    </div>${body}</div>`);
+  mSync()}
+function drillBeat(){if(trCfg().mode!=='drill'||!TR.host||!TR.host.isConnected||TR.host.closest('[hidden]'))return;
+  if(TR.beats>=8){trNext()}TR.beats++;const el=$('[data-tr="beat"]',TR.host);if(el)el.textContent=TR.beats}
+M.subs.add(drillBeat);
+
+/* ================= 7. Map ================= */
+const MV={host:null,root:0,kind:'major',set:0,lab:'n',presets:null,pi:0,cmp:true,vo:false,gi:0};
+function mapTitle(p){const n=spell(p.root,p.kind);return n[0].name+' '+KINDS[p.kind].n}
+function mapRender(){const host=MV.host;if(!host||!host.isConnected)return;
+  const K=KINDS[MV.kind],notes=spell(MV.root,MV.kind),isTri=!!K.chord&&notes.length===3&&!['sus2','sus4'].includes(MV.kind),set=isTri&&!MV.vo?MV.set:0;
+  const by=new Map(notes.map(n=>[n.pc,n]));
+  const chs=K.ch||[],cls=n=>n.d===1?'root':K.chord?(n.d===3?'third':n.d===5?'fifth':n.d===7?'seventh':'ext'):chs.includes(n.deg)?'char':'tone';
+  const voOn=MV.vo&&K.chord&&MV.kind!=='note',gr=voOn?grips(MV.root,MV.kind):[];let mute=[],gripTxt='';
+  const lab=n=>MV.lab==='d'?n.deg:n.name;
+  let dots=[],shapes=[],list='';
+  if(voOn){const g=gr[Math.min(MV.gi,gr.length-1)];
+    if(g){g.fr.forEach((f,s2)=>{if(f<0)mute.push(s2);else{const n=by.get((TUNE[s2]+f)%12);dots.push({s:s2,f,cls:cls(n),label:lab(n)})}});
+      gripTxt=`<p class="muted">Ladi no 6. līdz 1. stīgai: <span class="num">${g.fr.map(x=>x<0?'×':x).join(' ')}</span>. Forma ir pārvietojama: pabīdi to pa grifu, un pamattonis mainīsies līdzi.${(()=>{const have=new Set(g.fr.map((f,s2)=>f<0?-1:(TUNE[s2]+f)%12)),miss=notes.filter(n=>!have.has(n.pc));return miss.length?` Šajā tvērienā izlaists ${miss.map(n=>n.name+' ('+n.deg+')').join(', ')}, kā parasti ģitārā.`:''})()}</p>`}
+    else gripTxt='<p class="muted">Šim akordam neatradu ērtu tvērienu 4 ladu robežās.</p>';
+  }else if(set){const sh=triadShapes(MV.root,MV.kind,4-set,15);
+    for(const x of sh){shapes.push(x.cells);for(const c of x.cells)dots.push({s:c.s,f:c.f,cls:cls(c.t),label:lab(c.t)})}
+    list=`<div class="shapes">${sh.map(x=>`<span><b>${x.name}</b> · basā ${esc(x.cells[0].t.name)} · ladi ${x.cells.map(c=>c.f).join('-')} no zemākās stīgas</span>`).join('')}</div>`;
+  }else{const gh=K.ref&&MV.cmp?new Map(spellL(LET.indexOf(notes[0].name[0]),MV.root,K.ref).filter(r=>!by.has(r.pc)).map(r=>[r.pc,r])):new Map();
+    for(let i=0;i<6;i++)for(let f=0;f<=15;f++){const pc=(TUNE[i]+f)%12,n=by.get(pc),g=gh.get(pc);if(n)dots.push({s:i,f,cls:cls(n),label:lab(n)});else if(g)dots.push({s:i,f,cls:'ghost',label:lab(g)})}}
+  const grp=g=>Object.keys(KINDS).filter(k=>KINDS[k].g===g).map(k=>`<option value="${k}"${k===MV.kind?' selected':''}>${KINDS[k].o||KINDS[k].n[0].toUpperCase()+KINDS[k].n.slice(1)}</option>`).join('');
+  const legend=K.chord?`<div class="legend"><span><i style="background:var(--fb-root)"></i>pamattonis</span><span><i style="background:var(--fb-third)"></i>terca</span><span><i style="background:var(--fb-fifth)"></i>kvinta</span>${notes.some(n=>n.d===7)?'<span><i style="background:var(--fb-seventh)"></i>septima</span>':''}${notes.some(n=>![1,3,5,7].includes(n.d))?`<span><i style="background:var(--fb-ext)"></i>papildtoņi (${notes.filter(n=>![1,3,5,7].includes(n.d)).map(n=>n.deg).join(', ')})</span>`:''}</div>`
+    :(MV.kind==='note'?'':`<div class="legend"><span><i style="background:var(--fb-root)"></i>pamattonis</span>${chs.length?`<span><i style="background:var(--fb-char)"></i>raksturīgā nots (${chs.join(', ')})</span>`:''}${K.ref&&MV.cmp&&!set?`<span><i class="lg-ghost"></i>${K.refg} nots, kuras šeit nav</span>`:''}</div>`);
+  fbKeep(host,`<div class="stack-v">
+    ${MV.presets&&MV.presets.length>1?`<div class="seg" role="group" aria-label="Šī vingrinājuma kartes">${MV.presets.map((p,i)=>`<button data-act="map-preset" data-i="${i}" aria-pressed="${i===MV.pi}">${esc(mapTitle(p))}</button>`).join('')}</div>`:''}
+    <div class="opts">
+      <select class="sel" id="mapRoot" data-on="map-root" aria-label="Pamattonis">${BOTH.map((n,i)=>`<option value="${i}"${i===MV.root?' selected':''}>${n}</option>`).join('')}</select>
+      <select class="sel" id="mapKind" data-on="map-kind" aria-label="Gamma vai akords"><optgroup label="Gammas">${grp('s')}</optgroup><optgroup label="Modi">${grp('m')}</optgroup><optgroup label="Akordi">${grp('c')}</optgroup><optgroup label="Viena nots">${grp('n')}</optgroup></select>
+      ${K.chord&&MV.kind!=='note'?`<div class="seg" role="group" aria-label="Skats"><button data-act="map-vo" data-v="0" aria-pressed="${!MV.vo}">Visas notis</button><button data-act="map-vo" data-v="1" aria-pressed="${MV.vo}">Tvērieni</button></div>`:''}
+      ${isTri&&!MV.vo?`<select class="sel" id="mapSet" data-on="map-set" aria-label="Stīgu komplekts">${['Viss grifs','Stīgas 1-2-3','Stīgas 2-3-4','Stīgas 3-4-5','Stīgas 4-5-6'].map((n,i)=>`<option value="${i}"${i===set?' selected':''}>${n}</option>`).join('')}</select>`:''}
+      ${K.ref&&!isTri?`<button class="btn sm" data-act="map-cmp" aria-pressed="${MV.cmp}">${MV.cmp?'✓ ':''}Salīdzināt ar ${K.cmpn}</button>`:''}
+      <div class="seg" role="group" aria-label="Uzraksti"><button data-act="map-lab" data-v="n" aria-pressed="${MV.lab==='n'}">Notis</button><button data-act="map-lab" data-v="d" aria-pressed="${MV.lab==='d'}">Pakāpes</button></div>
+    </div>
+    <h3>${esc(notes[0].name+' '+K.n)}</h3>
+    ${voOn&&gr.length?`<div class="vchips" role="group" aria-label="Tvēriens">${gr.map((g,i)=>`<button class="btn sm" data-act="map-grip" data-i="${i}" aria-pressed="${Math.min(MV.gi,gr.length-1)===i}">Basā ${6-g.bass}. stīga · ${g.fb}. lads</button>`).join('')}<button class="btn sm" data-act="map-strum">Nospēlēt</button></div>`:''}
+    <div class="fbwrap">${fbSVG({hi:15,dots,shapes,mute,hit:'map-hit',label:notes[0].name+' '+K.n})}</div>
+    ${gripTxt}
+    ${legend}
+    ${MV.kind==='note'?'':`<div class="spell">${notes.map(n=>`<span${chs.includes(n.deg)?' class="char"':''}>${esc(n.name)}<small>${esc(n.deg)}</small></span>`).join('')}</div>`}
+    ${K.chx?`<p class="muted">${esc(K.chx)}</p>`:''}
+    ${list}
+  </div>`)}
+function mapLoad(p){MV.root=p.root;MV.kind=p.kind;MV.set=p.set||0;MV.lab=p.lab||'n'}
+
+/* ================= 7b. Circle of fifths ================= */
+const CF={host:null,k:0,md:'ion',axis:false,sev:false,sel:null,prog:[],playing:-1,timer:null,vl:false};
+const cfKey=()=>modeChordsFor(CF.k,CF.md);
+const S7={maj7:'maj7',dom7:'7',min7:'m7',m7b5:'m7♭5'};
+const cKind=c=>c.s7&&c.q7?c.q7:c.q;
+const cName=c=>c.s7&&c.q7?c.root+S7[c.q7]:c.root+qSuf(c.q);
+const cRn=c=>c.s7&&c.rn7?c.rn7:c.rn;
+const withSev=c=>Object.assign({},c,{s7:CF.sev&&!!c.q7});
+function cfStop(){clearTimeout(CF.timer);CF.timer=null;if(CF.playing>=0){CF.playing=-1;circleRender()}}
+function cfSelOf(c,shape){const [r,k]=segOf(c);return {ring:r,k,c,vi:0,shape:shape||null}}
+function strumFrets(fr,dur){let n=0;fr.forEach((f,s)=>{if(f>=0){pluckAt(TUNE[s]+f,n*0.035,dur||1.8,0.11);n++}})}
+function voicingsC(c){return c.s7&&c.q7?grips(c.pc,c.q7).map(g=>({n:'Basā '+(6-g.bass)+'. stīga · '+g.fb+'. lads',f:g.fr})):voicings(c.pc,c.q)}
+function selFrets(sel){if(sel.shape){const fr=[-1,-1,-1,-1,-1,-1];sel.shape.cells.forEach(x=>fr[x.s]=x.f);return fr}
+  const v=voicingsC(sel.c)[sel.vi||0];if(!v)return null;if(v.f)return v.f;const sh=triadShapes(sel.c.pc,sel.c.q,v.tri,15)[0];if(!sh)return null;
+  const fr=[-1,-1,-1,-1,-1,-1];sh.cells.forEach(x=>fr[x.s]=x.f);return fr}
+function strumSel(sel,dur){const fr=selFrets(sel);if(fr)strumFrets(fr,dur);else strum(sel.c,dur)}
+function cfPlay(){if(!CF.prog.length)return;actx();const path=CF.vl?vlPath(CF.prog):[];let i=0;
+  const step=()=>{if(i>=CF.prog.length){CF.playing=-1;CF.timer=null;circleRender();return}
+    CF.playing=i;CF.sel=cfSelOf(CF.prog[i],path[i]);strumSel(CF.sel,Math.min(3,4*60/M.bpm));circleRender();i++;CF.timer=setTimeout(step,4*60000/M.bpm)};step()}
+function chordBoard(sel){const c=sel.c,tones=spellL(LET.indexOf(c.root[0]),c.pc,cKind(c)),by=new Map(tones.map(t=>[t.pc,t]));
+  const dot=(s,f)=>{const t=by.get((TUNE[s]+f)%12);return {s,f,cls:t.d===1?'root':t.d===3?'third':t.d===5?'fifth':'seventh',label:t.name}};
+  let dots=[],shapes=[],mute=[],barre=null;
+  if(sel.shape){shapes=[sel.shape.cells];dots=sel.shape.cells.map(x=>dot(x.s,x.f))}
+  else{const v=voicingsC(c)[sel.vi||0];if(!v)return '<p class="muted">Šim akordam neatradu ērtu tvērienu.</p>';
+    if(v.tri)triadShapes(c.pc,c.q,v.tri,15).forEach(x=>{shapes.push(x.cells);x.cells.forEach(y=>dots.push(dot(y.s,y.f)))});
+    else{barre=v.barre||null;v.f.forEach((f,s)=>{if(f<0)mute.push(s);else dots.push(dot(s,f))})}}
+  return `<div class="fbwrap cf-fb">${fbSVG({hi:15,dots,shapes,mute,barre,hit:'map-hit',label:cName(c)+' uz grifa'})}</div>
+    <div class="legend"><span><i style="background:var(--fb-root)"></i>pamattonis</span><span><i style="background:var(--fb-third)"></i>terca</span><span><i style="background:var(--fb-fifth)"></i>kvinta</span>${c.s7&&c.q7?'<span><i style="background:var(--fb-seventh)"></i>septima</span>':''}</div>`}
+function cfSetMode(id){if(CF.axis){const T=cfKey().tonicPc;CF.k=cIdx((T-NAT[MODE_BY[id].deg]+12)%12)}CF.md=id;CF.sel=null;circleRender()}
+function circleRender(){const host=CF.host;if(!host||!host.isConnected)return;const K=cfKey(),Md=MODE_BY[CF.md],segs={},chs=K.chords.map(withSev);
+  for(const c of chs){const [r,i]=segOf(c);segs[r+i]=c}
+  const P=(r,a)=>{const t=(a-90)*Math.PI/180;return (180+r*Math.cos(t)).toFixed(1)+' '+(180+r*Math.sin(t)).toFixed(1)};
+  const XY=(r,a)=>{const t=(a-90)*Math.PI/180;return [(180+r*Math.cos(t)).toFixed(1),(180+r*Math.sin(t)).toFixed(1)]};
+  const sector=(r0,r1,a0,a1)=>`M${P(r1,a0)}A${r1} ${r1} 0 0 1 ${P(r1,a1)}L${P(r0,a1)}A${r0} ${r0} 0 0 0 ${P(r0,a0)}Z`;
+  let g='';
+  for(let k=0;k<12;k++){const a=k*30;
+    for(const [ring,r0,r1,lr,def] of [['o',114,172,143,CIRC_MAJ[k]],['i',66,114,90,CIRC_MIN[k]+'m']]){
+      const c=segs[ring+k],sel=CF.sel&&CF.sel.ring===ring&&CF.sel.k===k?' sel':'',[x,y]=XY(lr,a);
+      g+=`<g class="cs cs-${ring} cs-${c?c.kind:'off'}${sel}" data-act="cf-tap" data-r="${ring}" data-k="${k}"><path d="${sector(r0,r1,a-15,a+15)}"/>
+        <text x="${x}" y="${c?(+y-3).toFixed(1):y}" dy=".35em">${esc(c?cName(c):def)}</text>${c?`<text class="rn" x="${x}" y="${(+y+12).toFixed(1)}" dy=".35em">${cRn(c)}</text>`:''}</g>`}}
+  const svg=`<svg class="cf-svg${CF.sev?' sev':''}" viewBox="0 0 360 360" role="img" aria-label="Kvintu aplis: ${esc(K.tonic+' '+Md.s)}">${g}
+    <circle cx="180" cy="180" r="62" fill="var(--panel-lo)" stroke="var(--line)"/>
+    <text class="cf-c1" x="180" y="170" text-anchor="middle">${esc(K.tonic)}</text>
+    <text class="cf-c2" x="180" y="194" text-anchor="middle">${Md.s}</text>
+    <text class="cf-c3" x="180" y="212" text-anchor="middle">${CIRC_SIG[CF.k]}</text></svg>`;
+  const charC=chs.find(c=>c.kind==='char'),tonC=chs.find(c=>c.kind==='tonic'),hasCol=chs.some(c=>c.kind==='col');
+  let info;
+  if(CF.sel){const c=CF.sel.c,inKey=chs.find(x=>x.pc===c.pc&&x.q===c.q),rn=inKey?cRn(Object.assign({},inKey,{s7:c.s7})):romanOf(c.pc,c.q,K.tonicPc);
+    const what=inKey?(inKey.kind==='col'?'Krāsas akords: '+inKey.note:inKey.kind==='tonic'?'Tonika, mājas akords':inKey.kind==='char'?'Raksturīgais akords: tajā ir moda raksturīgā nots '+Md.cn:'Moda akords'):'Ārpus tonalitātes';
+    const vs=CF.sel.shape?[]:voicingsC(c);
+    info=`<div class="cf-sel"><div class="row" style="align-items:baseline"><span class="cf-big">${esc(cName(c))}</span><span class="num" style="color:var(--brass)">${rn}</span></div>
+      <p class="muted">${what}</p>
+      <div class="spell">${spellL(LET.indexOf(c.root[0]),c.pc,cKind(c)).map(n=>`<span>${esc(n.name)}</span>`).join('')}</div>
+      ${CF.sel.shape?`<p class="eyebrow">Tuvākais trijskanis · ladi ${CF.sel.shape.cells.map(x=>x.f).join('-')} uz G-B-e</p>`:`<div class="vchips" role="group" aria-label="Tvēriens">${vs.map((v,i)=>`<button class="btn sm" data-act="cf-v" data-i="${i}" aria-pressed="${(CF.sel.vi||0)===i}">${esc(v.n)}</button>`).join('')}</div>`}
+      ${chordBoard(CF.sel)}
+      <div class="row"><button class="btn sm" data-act="cf-strum">Nospēlēt</button><button class="btn sm solid" data-act="cf-add">+ Progresijai</button><button class="btn sm" data-act="cf-tonic"${c.q==='dim'?' disabled':''}>Padarīt par toniku</button><button class="btn sm" data-act="cf-map">Grifa kartē</button></div></div>`;
+  }else info=`<p class="muted">Pieskaries akordam aplī, lai to dzirdētu un redzētu tā notis un tvērienu.</p>`;
+  const chip=(c,i,now)=>`<button class="cchip${c.kind==='col'?' col':c.kind==='char'?' char':''}${now?' now':''}" data-act="cf-chip" data-i="${i}">${esc(cName(c))}<small>${cRn(c)}</small></button>`;
+  const progRn=c=>{const m=chs.find(x=>x.pc===c.pc&&x.q===c.q);return m?cRn(Object.assign({},m,{s7:c.s7})):romanOf(c.pc,c.q,K.tonicPc)};
+  const prog=CF.prog.map((c,i)=>`<button class="cchip${i===CF.playing?' now':''}" data-act="cf-pchip" data-i="${i}">${esc(cName(c))}<small>${progRn(c)}</small></button>`).join('');
+  const path=CF.vl&&CF.prog.length?vlPath(CF.prog):[];
+  const mi=MODES.findIndex(m=>m.id===CF.md);
+  const desc=CF.axis?`Tonika paliek ${esc(K.tonic)}. Šis mods izmanto ${esc(K.parent)} mažora notis, tāpēc ķīlis aplī ir pie ${esc(K.parent)}. Gaišāks mods pagriež ķīli pulksteņrādītāja virzienā (+1 ♯), tumšāks pretēji (+1 ♭).`
+    :CF.md==='ion'?`Paralēlā tonalitāte: ${esc(CIRC_MIN[CF.k])} minors. Blakus esošās tonalitātes aplī atšķiras tikai ar vienu noti, tāpēc uz tām ir viegli pāriet.`
+    :`Tās pašas notis kā ${esc(K.parent)} mažorā, tikai mājas ir ${esc(K.tonic)}.`;
+  fbKeep(host,`<div class="cf">
+    <div class="stack-v" style="align-items:center;gap:12px">
+      <div class="row" style="justify-content:center">
+        <div class="seg" role="group" aria-label="Modu skats"><button data-act="cf-axis" data-v="0" aria-pressed="${!CF.axis}">Tās pašas notis</button><button data-act="cf-axis" data-v="1" aria-pressed="${CF.axis}">Tā pati tonika</button></div>
+        <div class="seg" role="group" aria-label="Akordi"><button data-act="cf-sev" data-v="0" aria-pressed="${!CF.sev}">Trijskaņi</button><button data-act="cf-sev" data-v="1" aria-pressed="${CF.sev}">Septakordi</button></div>
+      </div>
+      <div class="vchips" style="justify-content:center" role="group" aria-label="Mods">${MODES.map(m=>`<button class="btn sm" data-act="cf-mode" data-v="${m.id}" aria-pressed="${CF.md===m.id}">${m.c}</button>`).join('')}</div>
+      ${CF.axis?`<div class="cf-bright"><button class="btn sm" data-act="cf-darker"${mi===6?' disabled':''}>◂ Tumšāk</button><span class="cf-lamps" role="img" aria-label="Gaišums ${7-mi} no 7">${MODES.map((m,i)=>`<i class="${i>=mi?'on':''}" title="${m.c}"></i>`).reverse().join('')}</span><button class="btn sm" data-act="cf-brighter"${mi===0?' disabled':''}>Gaišāk ▸</button></div>`:''}
+      ${svg}
+      <div class="legend"><span><i style="background:var(--brass)"></i>tonika</span><span><i style="background:color-mix(in srgb,var(--brass) 45%,var(--well))"></i>moda akordi</span>${charC?'<span><i style="background:color-mix(in srgb,var(--tube-blue) 70%,var(--well))"></i>raksturīgais akords</span>':''}${hasCol?'<span><i style="background:color-mix(in srgb,var(--tube-blue) 30%,var(--well))"></i>krāsas akordi</span>':''}</div>
+    </div>
+    <div class="stack-v">
+      <div><h3>${esc(K.tonic+' '+Md.s)}</h3><p class="muted">${desc}</p>
+        ${charC?`<p class="muted" style="margin-top:6px">Raksturīgais akords: <b style="color:#C9D7FF">${esc(cName(charC))}</b> (${cRn(charC)}). Tajā ir moda raksturīgā nots ${Md.cn}, tāpēc pāris ${esc(cName(tonC))}–${esc(cName(charC))} uztur moda krāsu.</p>`:''}</div>
+      <div><p class="eyebrow" style="margin-bottom:8px">Moda akordi</p><div class="cchips">${chs.map((c,i)=>c.kind!=='col'?chip(c,i):'').join('')}</div></div>
+      ${hasCol?`<div><p class="eyebrow" style="margin-bottom:8px">Krāsas ārpus tonalitātes</p><div class="cchips">${chs.map((c,i)=>c.kind==='col'?chip(c,i):'').join('')}</div></div>`:''}
+      <div class="card stack-v" style="gap:12px">${info}</div>
+      <div class="stack-v" style="gap:10px"><div class="row" style="justify-content:space-between"><h3>Progresija</h3>
+        <div class="seg" role="group" aria-label="Formas"><button data-act="cf-vl" data-v="0" aria-pressed="${!CF.vl}">Pilnie akordi</button><button data-act="cf-vl" data-v="1" aria-pressed="${CF.vl}">Tuvākie trijskaņi</button></div></div>
+        ${CF.vl&&CF.prog.length?`<p class="muted" style="font-size:13px">Uz G-B-e stīgām, katrs nākamais akords tuvākajā formā: ${CF.prog.map((c,i)=>esc(cName(c))+' '+(path[i]?path[i].cells.map(x=>x.f).join('-'):'–')).join(' → ')}</p>`:''}
+        ${CF.prog.length?`<div class="cchips">${prog}</div>`:'<p class="muted">Pievieno akordus ar „+ Progresijai”. Atskaņo vienu akordu taktī metronoma tempā.</p>'}
+        <div class="row"><button class="btn sm solid" data-act="cf-play"${CF.prog.length?'':' disabled'}>${CF.playing>=0?'Apturēt':'Atskaņot'}</button><button class="btn sm" data-act="cf-undo"${CF.prog.length?'':' disabled'}>Atsaukt pēdējo</button><button class="btn sm" data-act="cf-clear"${CF.prog.length?'':' disabled'}>Notīrīt</button><button class="btn sm" data-act="cf-save"${CF.prog.length?'':' disabled'}>Saglabāt kā ideju</button></div>
+      </div>
+    </div></div>`);cfScroll()}
+function cfSelect(ring,k,c){CF.sel={ring,k,c,vi:0,shape:null};strumSel(CF.sel);circleRender()}
+function cfScroll(){const w=CF.host&&$('.cf-fb',CF.host);if(!w)return;const ds=$$('.d',w);if(!ds.length)return;const b=w.getBoundingClientRect();
+  let l=Infinity,r=-Infinity;ds.forEach(d=>{const x=d.getBoundingClientRect();l=Math.min(l,x.left);r=Math.max(r,x.right)});
+  if(l<b.left+8||r>b.right-8)w.scrollLeft+=((l+r)/2)-(b.left+b.width/2)}
+
+/* ================= 7c. Chord identifier ================= */
+const AN={host:null,fr:[-1,3,2,0,1,0],pick:0,lab:'n',prog:[],playing:-1,timer:null};
+function anStop(){clearTimeout(AN.timer);AN.timer=null;if(AN.playing>=0){AN.playing=-1;anRender()}}
+function anPlay(){if(!AN.prog.length)return;actx();let i=0;const step=()=>{if(i>=AN.prog.length){AN.playing=-1;AN.timer=null;anRender();return}
+  AN.playing=i;strumFrets(AN.prog[i].fr,Math.min(3,4*60/M.bpm));anRender();i++;AN.timer=setTimeout(step,4*60000/M.bpm)};step()}
+const frStr=fr=>fr.some(x=>x>9)?fr.map(x=>x<0?'x':x).join(' '):fr.map(x=>x<0?'x':x).join('');
+function parseFr(t){t=String(t).trim().toLowerCase();if(!t)return null;const parts=/[\s,]/.test(t)?t.split(/[\s,]+/).filter(Boolean):t.split('');
+  if(parts.length!==6)return null;const fr=parts.map(x=>x==='x'||x==='-'?-1:(/^\d{1,2}$/.test(x)?+x:NaN));return fr.some(x=>Number.isNaN(x)||x>15)?null:fr}
+function anRender(){const host=AN.host;if(!host||!host.isConnected)return;const id=identify(AN.fr),c=id&&id.cands.length?id.cands[Math.min(AN.pick,id.cands.length-1)]:null;
+  const role=n=>!n?'tone':n.d===1?'root':n.d===3?'third':n.d===5?'fifth':n.d===7?'seventh':'ext';
+  const dots=[],mute=[];AN.fr.forEach((f,s)=>{if(f<0){mute.push(s);return}const pc=(TUNE[s]+f)%12,n=c?c.notes.find(x=>x.pc===pc):null;
+    dots.push({s,f,cls:c?role(n):'tone',label:n?(AN.lab==='d'?n.deg:n.name):SHARP[pc]})});
+  let res;
+  if(!id)res='<p class="muted">Vēl nav nošu. Pieskaries ladiem uz grifa vai ieraksti tvērienu laukā augšā.</p>';
+  else if(id.pcs.length===1)res=`<div class="cf-big">${esc(SHARP[id.pcs[0]])}</div><p class="muted">Viena nots (dažādās oktāvās). Akordam vajag vismaz trīs dažādas notis.</p>`;
+  else if(!c){const ivs=id.pcs.filter(p=>p!==id.bass).map(p=>SHARP[p]+': '+IVN[(p-id.bass+12)%12]+' no basa').join(' · ');
+    res=`<p class="cf-big" style="font-size:24px">Nav standarta nosaukuma</p><p class="muted">Intervāli no basa nots ${esc(SHARP[id.bass])}: ${esc(ivs)}.</p><p class="muted">Tas nenozīmē, ka skan slikti. Tā var būt krāsa vai daļa no lielāka akorda.</p>`}
+  else{const ks=keysFor(id.pcs),alt=id.cands.length>1;
+    res=`<div class="row" style="align-items:baseline"><span class="cf-big">${esc(c.name)}</span>${c.root!==id.bass?`<span class="muted">pamattonis ${esc(c.notes[0].name)}, basā ${esc(c.notes.find(n=>n.pc===id.bass).name)}</span>`:''}</div>
+      <div class="spell">${c.notes.filter(n=>id.pcs.includes(n.pc)).map(n=>`<span>${esc(n.name)}<small>${esc(n.deg)}</small></span>`).join('')}</div>
+      ${c.missing.length?`<p class="muted">Izlaists ${c.missing.map(n=>esc(n.name)+' ('+n.deg+')').join(', ')}. Tas ir normāli, šo noti bieži nespēlē.</p>`:''}
+      ${alt?`<div><p class="eyebrow" style="margin-bottom:8px">Citi nosaukumi tām pašām notīm</p><div class="vchips">${id.cands.map((x,i)=>`<button class="btn sm" data-act="an-pick" data-i="${i}" aria-pressed="${x===c}">${esc(x.name)}</button>`).join('')}</div></div>`:''}
+      <div><p class="eyebrow" style="margin-bottom:6px">Kur tas iederas</p><p class="muted">${ks.length?ks.map(k=>{const i=cIdx(k),sc=[0,2,4,5,7,9,11].map(x=>(k+x)%12),dg=sc.indexOf(c.root);
+          return `<b style="color:var(--ink)">${esc(CIRC_MAJ[i])} mažors</b> (${['I','ii','iii','IV','V','vi','vii'][dg]}) un ${esc(CIRC_MIN[i])} minors`}).join(' · '):'Nevienā mažora vai dabiskā minora tonalitātē bez izmaiņām. Tas ir krāsas akords, ko parasti aizņemas no citas tonalitātes vai moda.'}</p></div>`}
+  fbKeep(host,`<div class="stack-v">
+    <p class="muted" style="max-width:62ch">Pieskaries ladiem: katrā stīgā viena nots, kā īstā tvērienā. Atkārtots pieskāriens noņem noti. Atvērtā stīga ir pie 0.</p>
+    <div class="opts"><label class="field" for="anFr" style="max-width:200px">Ladi no 6. līdz 1. stīgai<input id="anFr" value="${esc(frStr(AN.fr))}" placeholder="x32010" autocomplete="off" data-on="an-fr"></label>
+      <button class="btn sm" data-act="an-strum">Nospēlēt</button><button class="btn sm" data-act="an-clear">Notīrīt</button>
+      <div class="seg" role="group" aria-label="Uzraksti"><button data-act="an-lab" data-v="n" aria-pressed="${AN.lab==='n'}">Notis</button><button data-act="an-lab" data-v="d" aria-pressed="${AN.lab==='d'}">Pakāpes</button></div></div>
+    <div class="fbwrap">${fbSVG({hi:15,dots,mute,hit:'an-hit',label:'Tavs tvēriens'})}</div>
+    <div class="card stack-v" style="gap:12px">${res}${c?`<div class="row"><button class="btn sm solid" data-act="an-add">+ Progresijai</button><button class="btn sm" data-act="an-save">Saglabāt kā ideju</button></div>`:''}</div>
+    ${anProgHTML()}
+  </div>`)}
+function anProgHTML(){const P=AN.prog;
+  let h=`<div class="stack-v" style="gap:12px"><h3>Progresijas analīze</h3>`;
+  if(!P.length)return h+`<p class="muted" style="max-width:62ch">Pievieno sava gabala akordus pēc kārtas ar „+ Progresijai”. Lietotne noteiks tonalitāti un katra akorda pakāpi.</p></div>`;
+  const A=analyzeProg(P),best=A[0],alts=A.slice(1).filter(x=>x.score>=best.score-2).slice(0,2);
+  const row=k=>`<div class="cchips">${P.map((c,i)=>`<button class="cchip${k.items[i].kind==='col'?' col':''}${k.items[i].kind==='out'?' out':''}${i===AN.playing?' now':''}" data-act="an-load" data-i="${i}">${esc(c.name)}<small>${k.items[i].rn}</small></button>`).join('')}</div>`;
+  const pats=k=>{const p=findPats(k.items.map(x=>x.rn));return p.length?`<p class="muted">Atpazīts: ${p.map(esc).join(' · ')}</p>`:''};
+  const notes=best.items.map((x,i)=>x.kind==='col'?`${esc(P[i].name)}: ${esc(x.note)}`:x.kind==='out'?`${esc(P[i].name)}: ārpus tonalitātes`:null).filter(Boolean);
+  h+=`<div class="card stack-v" style="gap:12px"><p class="eyebrow">Visticamāk</p><div class="cf-big" style="font-size:28px">${esc(best.name)}</div>${row(best)}${pats(best)}
+    ${notes.length?`<p class="muted">${notes.join(' · ')}</p>`:''}
+    ${alts.length?`<p class="eyebrow" style="margin-top:6px">Var dzirdēt arī kā</p>${alts.map(a=>`<div class="stack-v" style="gap:6px"><b>${esc(a.name)}</b>${row(a)}${pats(a)}</div>`).join('')}<p class="muted" style="font-size:13px">Kura no šīm ir īstā, izšķir tas, kurš akords skan kā mājas, parasti pirmais vai pēdējais.</p>`:''}
+    <div class="row"><button class="btn sm solid" data-act="an-play">${AN.playing>=0?'Apturēt':'Atskaņot'}</button><button class="btn sm" data-act="an-undo">Atsaukt pēdējo</button><button class="btn sm" data-act="an-pclear">Notīrīt</button><button class="btn sm" data-act="an-psave">Saglabāt kā ideju</button></div>
+    <p class="muted" style="font-size:13px">Pieskaries akordam, lai to atvērtu uz grifa.</p></div></div>`;
+  return h}
+
+/* ================= 7d. Tuner ================= */
+// YIN pitch detection, then a second pass after a low-pass filter so the string's sharp upper partials
+// (inharmonicity) do not pull the reading sharp. Tested on synthetic guitar tones: ~0.5 cent mean error.
+function tuYin(buf,sr,minF,maxF){
   const N=buf.length,W=N>>1,tMin=Math.max(2,Math.floor(sr/maxF)),tMax=Math.min(W-2,Math.ceil(sr/minF));
   let rms=0;for(let i=0;i<N;i++)rms+=buf[i]*buf[i];rms=Math.sqrt(rms/N);if(rms<0.004)return null;
   const d=new Float32Array(tMax+2);
@@ -117,97 +1172,448 @@ function yin(buf,sr,minF,maxF){
   if(tau<0){let m=1e9;for(let t=tMin;t<=tMax;t++)if(c[t]<m){m=c[t];tau=t}if(m>0.4)return null}
   const s0=c[tau-1],s1=c[tau],s2=c[tau+1],den=s0-2*s1+s2;
   return {f:sr/(den?tau+(s0-s2)/(2*den):tau),conf:1-s1,rms}}
-function lowpass(buf,sr,fc){const w=2*Math.PI*fc/sr,al=Math.sin(w)/(2*0.7071),cs=Math.cos(w),a0=1+al;
+function tuLowpass(buf,sr,fc){const w=2*Math.PI*fc/sr,al=Math.sin(w)/(2*0.7071),cs=Math.cos(w),a0=1+al;
   const b0=(1-cs)/2/a0,b1=(1-cs)/a0,b2=b0,a1=-2*cs/a0,a2=(1-al)/a0,out=new Float32Array(buf.length);
   let x1=0,x2=0,y1=0,y2=0;for(let i=0;i<buf.length;i++){const x=buf[i],y=b0*x+b1*x1+b2*x2-a1*y1-a2*y2;x2=x1;x1=x;y2=y1;y1=y;out[i]=y}return out}
-function detectPitch(buf,sr){const p=yin(buf,sr,55,1400);if(!p)return null;
-  const fc=Math.min(sr/4,p.f*2.5),lp=lowpass(lowpass(buf,sr,fc),sr,fc),q=yin(lp.subarray(256),sr,p.f/1.3,p.f*1.3);
+function tuDetect(buf,sr){const p=tuYin(buf,sr,55,1400);if(!p)return null;
+  const fc=Math.min(sr/4,p.f*2.5),lp=tuLowpass(tuLowpass(buf,sr,fc),sr,fc),q=tuYin(lp.subarray(256),sr,p.f/1.3,p.f*1.3);
   return q&&Math.abs(1200*Math.log2(q.f/p.f))<80?{f:q.f,conf:p.conf,rms:p.rms}:p}
 
-/* ---------- music ---------- */
-const NAMES=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
-const TUNINGS={std:[40,45,50,55,59,64],dropd:[38,45,50,55,59,64],eb:[39,44,49,54,58,63],dstd:[38,43,48,53,57,62],chrom:null};
-let A4=440,tuning='std',lock=-1;
-const midiF=m=>A4*Math.pow(2,(m-69)/12);
-const nm=m=>NAMES[((m%12)+12)%12],oct=m=>Math.floor(m/12)-1;
-
-/* ---------- meter ---------- */
-const CX=160,CY=168,R=140;
-(function drawMeter(){let s='';
+const TU_NAMES=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+const TU_TUNINGS={std:[40,45,50,55,59,64],dropd:[38,45,50,55,59,64],eb:[39,44,49,54,58,63],dstd:[38,43,48,53,57,62],chrom:null};
+const TU={host:null,on:false,an:null,src:null,buf:null,stream:null,timer:null,hist:[],target:null,cents:0,shown:0,lastGood:0,inSince:0,lock:-1,tuning:'std',A4:440,wake:null};
+try{const v=JSON.parse(localStorage.getItem('gs-tuner')||'{}');if(v.A4)TU.A4=v.A4;if(v.tuning&&v.tuning in TU_TUNINGS)TU.tuning=v.tuning}catch(e){}
+const tuSave=()=>{try{localStorage.setItem('gs-tuner',JSON.stringify({A4:TU.A4,tuning:TU.tuning}))}catch(e){}};
+const tuF=m=>TU.A4*Math.pow(2,(m-69)/12),tuNm=m=>TU_NAMES[((m%12)+12)%12],tuOct=m=>Math.floor(m/12)-1;
+function tuMeter(){const CX=160,CY=168,R=140;let s='';
   const pt=(a,r)=>{const t=(a-90)*Math.PI/180;return [(CX+r*Math.cos(t)).toFixed(1),(CY+r*Math.sin(t)).toFixed(1)]};
-  const arc=(a0,a1,r)=>{const [x0,y0]=pt(a0,r),[x1,y1]=pt(a1,r);return `M${x0} ${y0}A${r} ${r} 0 0 1 ${x1} ${y1}`};
-  s+=`<path d="${arc(-60,60,R)}" fill="none" stroke="var(--line)" stroke-width="2"/>`;
-  s+=`<path d="${arc(-3.6,3.6,R-8)}" fill="none" stroke="var(--good)" stroke-width="10" opacity=".35"/>`;
-  for(let c=-50;c<=50;c+=5){const a=c*1.2,maj=c%25===0,[x0,y0]=pt(a,R-(maj?16:9)),[x1,y1]=pt(a,R);s+=`<line class="tick${maj?' major':''}" x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}"/>`;
+  const arcP=(a0,a1,r)=>{const [x0,y0]=pt(a0,r),[x1,y1]=pt(a1,r);return `M${x0} ${y0}A${r} ${r} 0 0 1 ${x1} ${y1}`};
+  s+=`<path d="${arcP(-60,60,R)}" fill="none" stroke="var(--line)" stroke-width="2"/><path d="${arcP(-3.6,3.6,R-8)}" fill="none" stroke="var(--good)" stroke-width="10" opacity=".35"/>`;
+  for(let c=-50;c<=50;c+=5){const a=c*1.2,maj=c%25===0,[x0,y0]=pt(a,R-(maj?16:9)),[x1,y1]=pt(a,R);s+=`<line class="tu-tick${maj?' major':''}" x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}"/>`;
     if(maj){const [tx,ty]=pt(a,R-30);s+=`<text x="${tx}" y="${(+ty+4).toFixed(1)}">${c>0?'+'+c:c}</text>`}}
   const [fx,fy]=pt(-55,R-52),[sx,sy]=pt(55,R-52);
-  s+=`<text x="${fx}" y="${fy}" style="font-size:12px">♭</text><text x="${sx}" y="${sy}" style="font-size:12px">♯</text>`;
-  s+=`<g class="needle" id="needle"><line x1="${CX}" y1="${CY}" x2="${CX}" y2="${CY-R+6}"/></g><circle cx="${CX}" cy="${CY}" r="9" fill="var(--brass-lo)" stroke="var(--brass-hi)" stroke-width="1.5"/>`;
-  document.getElementById('meter').innerHTML=s})();
+  s+=`<text x="${fx}" y="${fy}">♭</text><text x="${sx}" y="${sy}">♯</text><g class="tu-needle" id="tuNeedle"><line x1="${CX}" y1="${CY}" x2="${CX}" y2="${CY-R+6}"/></g><circle cx="${CX}" cy="${CY}" r="9" fill="var(--brass-lo)" stroke="var(--brass-hi)" stroke-width="1.5"/>`;
+  return `<svg class="tu-meter" viewBox="0 0 320 190" aria-hidden="true">${s}</svg>`}
+function tuRender(){const host=TU.host;if(!host||!host.isConnected)return;const t=TU_TUNINGS[TU.tuning];
+  host.innerHTML=`<div class="tu stack-v">
+    <div class="card tu-read"><div class="tu-note idle" id="tuNote" aria-live="polite">–</div><div class="tu-hz" id="tuHz">&nbsp;</div>${tuMeter()}
+      <div class="tu-state"><span class="tu-lamp" id="tuLamp"></span><span class="tu-cents" id="tuCents">&nbsp;</span><span class="tu-hint" id="tuHint">&nbsp;</span></div>
+      <div class="tu-level" title="Mikrofona līmenis"><i id="tuLevel"></i></div></div>
+    <button class="btn ${TU.on?'':'solid'} lg" data-act="tu-start">${TU.on?'Apturēt':'Sākt skaņošanu'}</button>
+    <p class="tu-err" id="tuErr" hidden></p>
+    <div class="card stack-v">
+      <div class="row" style="justify-content:space-between">
+        <select class="sel" id="tuTuning" data-on="tu-tuning" aria-label="Skaņojums">${[['std','Standarts · E A D G B E'],['dropd','Drop D · D A D G B E'],['eb','Pustoni zemāk · E♭ A♭ D♭ G♭ B♭ E♭'],['dstd','D standarts · D G C F A D'],['chrom','Hromatisks · jebkura nots']].map(([k,n])=>`<option value="${k}"${k===TU.tuning?' selected':''}>${n}</option>`).join('')}</select>
+        <div class="tu-ref"><button data-act="tu-ref" data-d="-1" aria-label="Atskaites A zemāk">−</button><span>A = ${TU.A4} Hz</span><button data-act="tu-ref" data-d="1" aria-label="Atskaites A augstāk">+</button></div>
+      </div>
+      ${t?`<div class="tu-strings" id="tuStrings">${t.map((m,i)=>`<button data-act="tu-str" data-i="${i}" aria-pressed="${TU.lock===i}"><span>${tuNm(m)}</span><small>${6-i}. st.</small></button>`).join('')}</div>`:''}
+      <p class="muted" style="font-size:13px">${!t?'Hromatisks režīms: rāda tuvāko noti jebkurai skaņai.':TU.lock<0?'Automātiski: lietotne pati atrod tuvāko stīgu. Pieskaries stīgai, lai skaņotu tieši uz to.':`Skaņo ${6-TU.lock}. stīgu uz ${tuNm(t[TU.lock])}${tuOct(t[TU.lock])}. Pieskaries vēlreiz, lai atgrieztos automātiskajā režīmā.`}</p>
+      <div class="row"><button class="btn sm" data-act="tu-tone">Atskaņot atskaites toni</button></div>
+    </div>
+    <p class="muted" style="font-size:13px">Labākam rezultātam: kluss fons, telefons tuvu ģitārai, viena stīga reizē. Lasījums nostabilizējas pusotras sekundes laikā pēc uzsitiena.</p>
+  </div>`}
+function tuErr(t){const e=document.getElementById('tuErr');if(e){e.textContent=t;e.hidden=false}}
+async function tuStart(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){tuErr('Šis pārlūks neatļauj mikrofonu. Atver lietotni caur https:// adresi Chrome pārlūkā.');return}
+  let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}})}
+  catch(e){tuErr(e&&e.name==='NotAllowedError'?'Mikrofona atļauja liegta. Atļauj to pārlūka vai lietotnes iestatījumos un mēģini vēlreiz.':'Mikrofonu neizdevās atvērt: '+(e&&e.message||e));return}
+  const c=actx();if(!c){stream.getTracks().forEach(t=>t.stop());tuErr('Šajā pārlūkā skaņa nav pieejama.');return}
+  TU.stream=stream;TU.src=c.createMediaStreamSource(stream);TU.an=c.createAnalyser();TU.an.fftSize=4096;TU.src.connect(TU.an);TU.buf=new Float32Array(TU.an.fftSize);
+  TU.on=true;TU.hist=[];TU.target=null;clearInterval(TU.timer);TU.timer=setInterval(tuTick,60);requestAnimationFrame(tuDraw);
+  try{if('wakeLock' in navigator)TU.wake=await navigator.wakeLock.request('screen')}catch(e){}
+  tuRender()}
+function tuStop(){if(!TU.on)return;clearInterval(TU.timer);TU.timer=null;try{TU.stream.getTracks().forEach(t=>t.stop())}catch(e){}try{TU.src.disconnect()}catch(e){}
+  TU.an=null;TU.src=null;TU.stream=null;TU.on=false;try{TU.wake&&TU.wake.release()}catch(e){}TU.wake=null;tuRender()}
+function tuTick(){if(!TU.an)return;TU.an.getFloatTimeDomainData(TU.buf);const el=id=>document.getElementById(id);
+  const p=tuDetect(TU.buf,A.ctx.sampleRate),now=performance.now();
+  let r=0;if(!p){for(let i=0;i<TU.buf.length;i++)r+=TU.buf[i]*TU.buf[i];r=Math.sqrt(r/TU.buf.length)}
+  if(el('tuLevel'))el('tuLevel').style.width=Math.min(100,(p?p.rms:r)*900).toFixed(0)+'%';
+  if(!el('tuNote'))return;
+  if(!p||p.conf<0.8){if(now-TU.lastGood>1500){el('tuNote').classList.add('idle');el('tuLamp').classList.remove('on');el('tuHint').textContent=' ';el('tuHint').className='tu-hint';TU.inSince=0}return}
+  TU.lastGood=now;const midi=69+12*Math.log2(p.f/TU.A4),t=TU_TUNINGS[TU.tuning];
+  let tm;if(!t)tm=Math.round(midi);else if(TU.lock>=0)tm=t[TU.lock];else{tm=t.reduce((a,b)=>Math.abs(b-midi)<Math.abs(a-midi)?b:a);if(Math.abs(midi-tm)>1.5)tm=Math.round(midi)}
+  if(TU.target!==tm){TU.target=tm;TU.hist=[]}
+  TU.hist.push(p.f);if(TU.hist.length>7)TU.hist.shift();
+  const fm=[...TU.hist].sort((a,b)=>a-b)[TU.hist.length>>1],cents=1200*Math.log2(fm/tuF(tm));TU.cents=cents;
+  el('tuNote').innerHTML=`${tuNm(tm)}<sub>${tuOct(tm)}</sub>`;el('tuNote').classList.remove('idle');
+  el('tuHz').textContent=fm.toFixed(2)+' Hz · mērķis '+tuF(tm).toFixed(2)+' Hz';
+  const near=Math.abs(cents)<=3;
+  el('tuCents').textContent=Math.abs(cents)>=99.5?(cents>0?'+':'−')+Math.round(Math.abs(cents)/100)+' pust.':(cents>=0?'+':'−')+Math.abs(cents).toFixed(1).replace('.',',')+' c';
+  if(near){if(!TU.inSince)TU.inSince=now}else TU.inSince=0;
+  const locked=near&&now-TU.inSince>350;
+  el('tuLamp').classList.toggle('on',locked);
+  el('tuHint').textContent=locked?'Noskaņots':near?'Gandrīz':cents<0?'Pievelc ↑':'Atlaid ↓';el('tuHint').className='tu-hint'+(locked?' ok':'');
+  const st=el('tuStrings');if(st&&t)[...st.children].forEach((b,i)=>b.classList.toggle('near',t[i]===tm))}
+function tuDraw(){if(!TU.on)return;TU.shown+=(Math.max(-50,Math.min(50,TU.cents))-TU.shown)*0.35;
+  const n=document.getElementById('tuNeedle');if(n)n.style.transform=`rotate(${(TU.shown*1.2).toFixed(2)}deg)`;requestAnimationFrame(tuDraw)}
 
-/* ---------- UI ---------- */
-const $=id=>document.getElementById(id);
-function renderStrings(){const t=TUNINGS[tuning],el=$('strings');
-  if(!t){el.innerHTML='';$('modeTxt').textContent='Hromatisks režīms: rāda tuvāko noti jebkurai skaņai.';return}
-  el.innerHTML=t.map((m,i)=>`<button data-i="${i}" aria-pressed="${lock===i}"><span>${nm(m)}</span><small>${6-i}. st.</small></button>`).join('');
-  $('modeTxt').textContent=lock<0?'Automātiski: lietotne pati atrod tuvāko stīgu. Pieskaries stīgai, lai skaņotu tieši uz to.':`Skaņo ${6-lock}. stīgu uz ${nm(t[lock])}${oct(t[lock])}. Pieskaries vēlreiz, lai atgrieztos automātiskajā režīmā.`}
-$('strings').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const i=+b.dataset.i;lock=lock===i?-1:i;hist=[];renderStrings()});
-$('tuning').addEventListener('change',e=>{tuning=e.target.value;lock=-1;hist=[];renderStrings();save()});
-function setRef(v){A4=Math.max(430,Math.min(450,v));$('refVal').textContent='A = '+A4+' Hz';save()}
-$('refDown').onclick=()=>setRef(A4-1);$('refUp').onclick=()=>setRef(A4+1);
-function save(){try{localStorage.setItem('tuner',JSON.stringify({A4,tuning}))}catch(e){}}
-try{const v=JSON.parse(localStorage.getItem('tuner')||'{}');if(v.A4)A4=v.A4;if(v.tuning&&v.tuning in TUNINGS)tuning=v.tuning}catch(e){}
-$('tuning').value=tuning;setRef(A4);renderStrings();
+/* ================= 8. Views ================= */
+let TAB='today',TOOL=(lsGet(LSU)||{}).tool||'metro';
+function arc(cx,cy,r,a0,a1){const p=a=>{const t=(a-90)*Math.PI/180;return (cx+r*Math.cos(t)).toFixed(2)+' '+(cy+r*Math.sin(t)).toFixed(2)};
+  return `M${p(a0)}A${r} ${r} 0 ${a1-a0>180?1:0} 1 ${p(a1)}`}
+function ringSVG(tg,by,min){const total=tg.reduce((a,b)=>a+b,0),gap=13;let a=0,s='';
+  BLOCKS.forEach((b,i)=>{const span=360*tg[i]/total,s0=a+gap/2,s1=a+span-gap/2,fr=Math.min(1,(by[b.id]||0)/(tg[i]*60));
+    s+=`<path d="${arc(110,110,92,s0,s1)}" fill="none" stroke="rgb(255 236 210 / .14)" stroke-width="15" stroke-linecap="round"/>`;
+    if(fr>0.02)s+=`<path d="${arc(110,110,92,s0,s0+(s1-s0)*fr)}" fill="none" stroke="var(--c-${b.id})" stroke-width="15" stroke-linecap="round" style="filter:drop-shadow(0 0 6px var(--c-${b.id}))"/>`;
+    a+=span});
+  return `<svg class="ring" viewBox="0 0 220 220" role="img" aria-label="Šodien nospēlētas ${min} minūtes no ${S.settings.goal}">${s}</svg>`}
+function weekChart(){const t=agg(),g=S.settings.goal,today=ymd(),days=[];for(let i=6;i>=0;i--)days.push(addDays(today,-i));
+  const vals=days.map(d=>t.get(d)||{total:0,by:{}}),max=Math.max(g,...vals.map(v=>v.total/60))*1.14;
+  return `<div class="week"><div class="week-bars" role="img" aria-label="Pēdējo septiņu dienu minūtes pa blokiem">
+    <div class="week-goal" style="bottom:${(g/max*100).toFixed(1)}%"><span>${g}</span></div>
+    ${days.map((d,i)=>{const v=vals[i];const tip=shortDate(d)+' '+Math.round(v.total/60)+' min'+BLOCKS.filter(b=>v.by[b.id]).map(b=>'\n'+b.n+': '+Math.round(v.by[b.id]/60)).join('');
+      return `<div class="wstack" title="${esc(tip)}">${BLOCKS.map(b=>{const m=(v.by[b.id]||0)/60;return m>=0.5?`<i style="height:${(m/max*100).toFixed(1)}%;background:var(--c-${b.id})"></i>`:''}).join('')}</div>`}).join('')}
+  </div><div class="week-lab">${days.map(d=>`<span class="${d===today?'is-today':''}">${WDS[parseYmd(d).getDay()]}</span>`).join('')}</div></div>`}
+function renderToday(){const tg=targets(),by=todayBy(),tot=Object.values(by).reduce((a,b)=>a+b,0),min=Math.floor(tot/60),g=S.settings.goal,st=streaks();
+  const now=new Date(),t=agg();let wk=0;const dow=(now.getDay()+6)%7;for(let i=0;i<=dow;i++)wk+=((t.get(addDays(ymd(),-i))||{}).total||0);
+  const left=Math.max(0,g-min),stage=STAGES[S.settings.stage-1];
+  const label=min===0?'Sākt stundu':left>0?`Turpināt · atlikušas ${left} min`:'Mērķis sasniegts · spēlēt vēl';
+  $('#v-today').innerHTML=`<section class="hero">
+      <picture><source media="(min-width:880px)" srcset="img/hero-wide.webp"><img class="bgimg" src="img/hero-tall.webp" alt=""></picture>
+      <div class="hero-main">
+        <p class="eyebrow">${WD[now.getDay()]}, ${now.getDate()}. ${MON[now.getMonth()]}</p>
+        <div class="ringwrap">${ringSVG(tg,by,min)}<div class="ringmid"><span class="big">${min}</span><span class="of">no ${g} min</span></div></div>
+      </div>
+      <div class="hero-side">
+        <div class="herostats"><div><b>${st.cur}</b><span>dienu sērija</span></div><div><b>${Math.round(wk/60)}</b><span>min šonedēļ</span></div><div><b>${S.settings.stage}/${STAGES.length}</b><span>posms</span></div></div>
+        <button class="btn solid lg" data-act="start-all">${label}</button>
+      </div>
+    </section>
+    <div class="today-body">
+      <div>
+        <div class="plan-head"><h2>Šodienas stunda</h2><button class="btn ghost sm" data-act="go" data-tab="path">Posms ${S.settings.stage} · ${esc(stage.t)}</button></div>
+        <ul class="blocks">${BLOCKS.map((b,i)=>{const ex=exFor(b.id),done=(by[b.id]||0)/60,full=done>=tg[i];const piece=b.id==='rep'?activePiece():null;
+          const title=b.id==='rep'?(piece?piece.title+(piece.artist?' · '+piece.artist:''):'Pievieno skaņdarbu sadaļā Darbi'):ex.t;
+          return `<li class="blk${full?' done':''}" style="--c:var(--c-${b.id})">
+            <img class="blk-ico" src="img/ico-${b.id}.webp" alt="">
+            <div><div class="blk-head"><span class="dot"></span><span class="blk-name">${b.n}</span><span class="blk-min">${full?'✓ ':''}${Math.floor(done)} / ${tg[i]} min</span></div>
+              <div class="blk-ex">${esc(title)}</div><div class="bar"><i style="width:${Math.min(100,done/tg[i]*100).toFixed(0)}%"></i></div></div>
+            <div class="blk-act"><button class="btn sm solid" data-act="start" data-b="${b.id}">${done>0&&!full?'Turpināt':full?'Vēl':'Sākt'}</button>${pool(b.id).length>1?`<button class="btn sm" data-act="swap" data-b="${b.id}">Cits</button>`:''}</div>
+          </li>`}).join('')}</ul>
+      </div>
+      <aside class="card"><h3>Pēdējās 7 dienas</h3>${weekChart()}<div class="legend" style="margin-top:12px">${BLOCKS.map(b=>`<span><i style="background:var(--c-${b.id})"></i>${b.n}</span>`).join('')}</div></aside>
+    </div>`}
 
-/* ---------- audio ---------- */
-let ctx=null,an=null,buf=null,stream=null,timer=null,wake=null,hist=[],shown=0,lastGood=0,inTuneSince=0;
-async function start(){$('err').hidden=true;
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){showErr('Šis pārlūks neatļauj mikrofonu. Atver lapu caur https:// adresi Chrome pārlūkā.');return}
-  try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}})}
-  catch(e){showErr(e&&e.name==='NotAllowedError'?'Mikrofona atļauja liegta. Atļauj to pārlūka adreses joslas iestatījumos un mēģini vēlreiz.':'Mikrofonu neizdevās atvērt: '+(e&&e.message||e));return}
-  ctx=new (window.AudioContext||window.webkitAudioContext)();const src=ctx.createMediaStreamSource(stream);
-  an=ctx.createAnalyser();an.fftSize=4096;src.connect(an);buf=new Float32Array(an.fftSize);
-  timer=setInterval(tick,60);requestAnimationFrame(draw);
-  try{if('wakeLock' in navigator)wake=await navigator.wakeLock.request('screen')}catch(e){}
-  $('start').textContent='Apturēt';$('start').classList.remove('solid')}
-function stop(){clearInterval(timer);timer=null;try{stream&&stream.getTracks().forEach(t=>t.stop())}catch(e){}try{ctx&&ctx.close()}catch(e){}ctx=null;an=null;
-  try{wake&&wake.release()}catch(e){}wake=null;$('start').textContent='Sākt skaņošanu';$('start').classList.add('solid');$('note').classList.add('idle');$('lamp').classList.remove('on');$('level').style.width='0'}
-function showErr(t){$('err').textContent=t;$('err').hidden=false}
-$('start').onclick=()=>{timer?stop():start()};
-document.addEventListener('visibilitychange',async()=>{if(document.visibilityState==='visible'&&timer){try{if('wakeLock' in navigator)wake=await navigator.wakeLock.request('screen')}catch(e){}}});
+function renderTools(){const el=$('#v-tools');
+  el.innerHTML=`<div class="viewhead"><h2>Rīki</h2></div>
+    <div><div class="seg toolseg" role="group" aria-label="Rīks">${[['metro','Metronoms'],['tuner','Skaņotājs'],['trainer','Nošu trenažieris'],['map','Grifa karte'],['circle','Kvintu aplis'],['ident','Akordu noteicējs']].map(([k,n])=>`<button data-act="tool" data-v="${k}" aria-pressed="${TOOL===k}">${n}</button>`).join('')}</div></div>
+    <div id="toolHost"></div>`;
+  const host=$('#toolHost');
+  if(TOOL==='metro'){host.innerHTML=`<div style="max-width:520px">${metroHTML('tm')}</div>`;mSync()}
+  else if(TOOL==='trainer'){TR.host=host;TR.metro=true;if(!TR.q)trNext();else trRender()}
+  else if(TOOL==='circle'){CF.host=host;circleRender()}
+  else if(TOOL==='ident'){AN.host=host;anRender()}
+  else if(TOOL==='tuner'){TU.host=host;tuRender()}
+  else{MV.host=host;MV.presets=null;mapRender()}}
 
-let target=null,cents=0;
-function tick(){if(!an)return;an.getFloatTimeDomainData(buf);
-  const p=detectPitch(buf,ctx.sampleRate),now=performance.now();
-  $('level').style.width=Math.min(100,(p?p.rms:rms(buf))*900).toFixed(0)+'%';
-  if(!p||p.conf<0.8){if(now-lastGood>1500){$('note').classList.add('idle');$('lamp').classList.remove('on');$('hint').textContent=' ';$('hint').className='hint';inTuneSince=0}return}
-  lastGood=now;const midi=69+12*Math.log2(p.f/A4),t=TUNINGS[tuning];
-  let tm;if(!t)tm=Math.round(midi);else if(lock>=0)tm=t[lock];else{tm=t.reduce((a,b)=>Math.abs(b-midi)<Math.abs(a-midi)?b:a);if(Math.abs(midi-tm)>1.5)tm=Math.round(midi)}
-  if(target!==tm){target=tm;hist=[]}
-  hist.push(p.f);if(hist.length>7)hist.shift();
-  const fm=[...hist].sort((a,b)=>a-b)[hist.length>>1];cents=1200*Math.log2(fm/midiF(tm));
-  $('note').innerHTML=`${nm(tm)}<sub>${oct(tm)}</sub>`;$('note').classList.remove('idle');
-  $('hz').textContent=fm.toFixed(2)+' Hz · mērķis '+midiF(tm).toFixed(2)+' Hz';
-  const ac=Math.abs(cents),near=ac<=3;
-  $('cents').textContent=(Math.abs(cents)>=99.5?(cents>0?'+':'−')+Math.round(Math.abs(cents)/100)+' pust.':(cents>=0?'+':'−')+Math.abs(cents).toFixed(1).replace('.',',')+' c');
-  if(near){if(!inTuneSince)inTuneSince=now}else inTuneSince=0;
-  const locked=near&&now-inTuneSince>350;
-  $('lamp').classList.toggle('on',locked);
-  $('hint').textContent=locked?'Noskaņots':near?'Gandrīz':cents<0?'Pievelc ↑':'Atlaid ↓';
-  $('hint').className='hint'+(locked?' ok':'');
-  if(t)[...$('strings').children].forEach((b,i)=>b.classList.toggle('near',t[i]===tm))}
-function rms(b){let s=0;for(let i=0;i<b.length;i++)s+=b[i]*b[i];return Math.sqrt(s/b.length)}
-function draw(){if(!an)return;shown+=(Math.max(-50,Math.min(50,cents))-shown)*0.35;
-  $('needle').style.transform=`rotate(${(shown*1.2).toFixed(2)}deg)`;requestAnimationFrame(draw)}
+function trAgg(i){let n=0,a=0,ms=0,c=0;for(let f=0;f<=12;f++){const st=S.settings.trainer[i+'-'+f];if(st){n+=st[0];a+=st[1];ms+=st[2];c++}}
+  return c?{n,acc:a/c,ms:ms/c,c}:{n:0,acc:0,ms:0,c:0}}
+function autoCheck(ck){const ag=ck.strings.map(trAgg),n=ag.reduce((a,x)=>a+x.n,0);
+  if(!n)return {pass:false,text:'Trenažierī vēl nav atbilžu'};
+  const seen=ag.filter(x=>x.c),a=seen.reduce((s,x)=>s+x.acc,0)/seen.length,ms=seen.reduce((s,x)=>s+x.ms,0)/seen.length;
+  const pass=ag.every(x=>x.n>=ck.n&&x.c>=7&&x.acc>=ck.acc&&x.ms<=ck.ms);
+  return {pass,text:`Pašlaik: ${Math.round(a*100)} % pareizi, vidēji ${dec(ms/1000)} s, ${n} atbildes`+(pass?'':`. Vajag vismaz ${ck.n} atbildes uz katras stīgas.`)}}
+function renderPath(){
+  $('#v-path').innerHTML=`<div class="viewhead"><h2>Ceļš</h2><p class="lede">Seši posmi no grifa notīm līdz modiem un septakordiem. Aktīvais posms nosaka, kādus teorijas un komponēšanas uzdevumus saņem katru dienu.</p></div>
+  <div>${STAGES.map((st,i)=>{const n=i+1,cur=S.settings.stage===n;let done=0;
+    const rows=st.checks.map((ck,j)=>{const key=n+'-'+j;
+      if(ck.auto){const r=autoCheck(ck);if(r.pass)done++;return `<div class="check"><span class="auto${r.pass?' pass':''}" aria-hidden="true">${r.pass?'✓':''}</span><span>${esc(ck.t)}<small>${esc(r.text)}</small></span></div>`}
+      const on=!!S.settings.checks[key];if(on)done++;
+      return `<label class="check"><input type="checkbox" id="ck-${key}" data-on="check" data-k="${key}"${on?' checked':''}><span>${esc(ck.t)}</span></label>`}).join('');
+    const complete=done===st.checks.length;
+    return `<div class="stage${cur?' cur':''}${complete?' done':''}"><img class="badge" src="img/badge-${n}.webp" alt="${complete?'Posms izpildīts':''}"><div class="stage-body">
+      <div><p class="eyebrow">${n}. posms</p><h3>${esc(st.t)}</h3><p class="lede" style="max-width:62ch">${esc(st.s)}</p></div>
+      <div class="checks">${rows}</div>
+      <div class="row"><span class="chip plain num">${done} / ${st.checks.length}</span>${cur?'<span class="chip plain">Aktīvais posms</span>':`<button class="btn sm" data-act="stage" data-n="${n}">Padarīt par aktīvo</button>`}</div>
+    </div></div>`}).join('')}</div>`}
 
-/* reference tone: plucked string at the selected (or nearest) string's pitch */
-$('refTone').onclick=()=>{const t=TUNINGS[tuning]||TUNINGS.std,m=lock>=0?t[lock]:(target!=null?target:t[0]);
-  const c=ctx||new (window.AudioContext||window.webkitAudioContext)(),tt=c.currentTime,f=midiF(m),g=c.createGain(),lp=c.createBiquadFilter(),o=c.createOscillator();
-  o.type='sawtooth';o.frequency.value=f;lp.type='lowpass';lp.frequency.setValueAtTime(f*6,tt);lp.frequency.exponentialRampToValueAtTime(f*1.5,tt+1.5);
-  g.gain.setValueAtTime(0.0001,tt);g.gain.exponentialRampToValueAtTime(0.25,tt+0.01);g.gain.exponentialRampToValueAtTime(0.0001,tt+2.5);
-  o.connect(lp);lp.connect(g);g.connect(c.destination);o.start(tt);o.stop(tt+2.6)};
+const SEC_ST=['nav sākts','lēni','tempā','no galvas'];
+function pieceHTML(p,inSession){return `<div class="piece">
+  <div class="piece-head"><div><h3>${esc(p.title)}</h3><span class="muted">${esc(p.artist||'')}${p.bpm?(p.artist?' · ':'')+'mērķis '+p.bpm+' BPM':''}</span></div>
+    ${inSession?'':`<div class="row">${p.active?'<span class="chip plain">Aktīvais</span>':`<button class="btn sm" data-act="piece-active" data-id="${p.id}">Padarīt par aktīvo</button>`}<button class="btn sm ghost danger" data-act="piece-del" data-id="${p.id}">${UI.del===p.id?'Tiešām dzēst?':'Dzēst'}</button></div>`}</div>
+  <div class="secs">${p.sections.map((s,i)=>`<button class="sec" data-st="${s.st}" data-act="sec" data-id="${p.id}" data-i="${i}">${esc(s.n)}<small>${SEC_ST[s.st]}</small></button>`).join('')}</div>
+</div>`}
+const UI={del:null};
+function renderWorks(){
+  $('#v-works').innerHTML=`<div class="viewhead"><h2>Darbi</h2><p class="lede">Skaņdarbi, ko mācies, un idejas no komponēšanas bloka.</p></div>
+  <div class="cols">
+    <div class="stack-v">
+      <h3>Skaņdarbi</h3>
+      ${S.works.pieces.length?`<div>${S.works.pieces.map(p=>pieceHTML(p)).join('')}</div><p class="muted" style="font-size:13px">Pieskaries sadaļai, lai mainītu tās statusu: nav sākts, lēni, tempā, no galvas.</p>`:'<p class="empty">Vēl nav neviena skaņdarba. Pievieno pirmo, un Skaņdarba bloks katru dienu strādās ar to.</p>'}
+      <form class="card stack-v" data-form="piece">
+        <div class="formgrid">
+          <label class="field">Nosaukums<input id="pTitle" required maxlength="80" autocomplete="off"></label>
+          <label class="field">Izpildītājs<input id="pArtist" maxlength="60" autocomplete="off"></label>
+          <label class="field">Mērķa temps, BPM<input id="pBpm" type="number" min="30" max="300" inputmode="numeric"></label>
+        </div>
+        <label class="field">Sadaļas, atdalītas ar komatu<input id="pSecs" value="Ievads, Pants, Piedziedājums, Solo" maxlength="200" autocomplete="off"></label>
+        <div><button class="btn solid" type="submit">Pievienot skaņdarbu</button></div>
+      </form>
+    </div>
+    <div class="stack-v">
+      <h3>Idejas</h3>
+      ${S.works.ideas.length?`<div>${S.works.ideas.map(x=>`<div class="idea"><div class="piece-head"><b>${esc(x.title||'Bez nosaukuma')}</b><span class="muted num" style="font-size:12px">${shortDate(x.d)}${x.ex&&EXM[x.ex]?' · '+esc(EXM[x.ex].t):''}</span></div>${x.note?`<p>${esc(x.note)}</p>`:''}
+        <div class="row"><button class="btn sm" data-act="idea-rec" data-id="${x.id}" aria-pressed="${!!x.rec}">${x.rec?'✓ Ierakstīts':'Atzīmēt kā ierakstītu'}</button><button class="btn sm ghost danger" data-act="idea-del" data-id="${x.id}">${UI.del===x.id?'Tiešām dzēst?':'Dzēst'}</button></div></div>`).join('')}</div>`
+        :'<p class="empty">Idejas parādās šeit, kad komponēšanas blokā ieraksti nosaukumu vai piezīmi. Vari pievienot arī ar roku.</p>'}
+      <form class="card stack-v" data-form="idea">
+        <label class="field">Idejas nosaukums<input id="iTitle" required maxlength="80" autocomplete="off"></label>
+        <label class="field">Piezīmes<textarea id="iNote" maxlength="600"></textarea></label>
+        <div><button class="btn solid" type="submit">Pievienot ideju</button></div>
+      </form>
+    </div>
+  </div>`}
 
+function spark(vals){if(vals.length<2)return '';const w=96,h=28,mn=Math.min(...vals),mx=Math.max(...vals),r=mx-mn||1;
+  const pts=vals.map((v,i)=>[(4+i*(w-8)/(vals.length-1)).toFixed(1),(h-5-(v-mn)/r*(h-10)).toFixed(1)]);
+  return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true"><polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${pts[pts.length-1][0]}" cy="${pts[pts.length-1][1]}" r="3.5" fill="var(--ink)"/></svg>`}
+function renderHistory(){const t=agg(),all=allEntries(),g=S.settings.goal,today=ymd(),st=streaks();
+  const totSec=all.reduce((a,e)=>a+e.s,0),dow=(parseYmd(today).getDay()+6)%7;
+  let wk=0;for(let i=0;i<=dow;i++)wk+=((t.get(addDays(today,-i))||{}).total||0);
+  const start=addDays(today,-(11*7+dow));let cells='';
+  for(let w=0;w<12;w++)for(let d=0;d<7;d++){const k=addDays(start,w*7+d);if(k>today){cells+='<i class="fut"></i>';continue}
+    const m=((t.get(k)||{}).total||0)/60,l=m<0.5?0:m<g*.25?1:m<g*.6?2:m<g?3:4;cells+=`<i class="l${l}" title="${shortDate(k)} ${Math.round(m)} min"></i>`}
+  const by30={};let max30=0;for(let i=0;i<30;i++){const d=t.get(addDays(today,-i));if(d)for(const k in d.by)by30[k]=(by30[k]||0)+d.by[k]}
+  BLOCKS.forEach(b=>{max30=Math.max(max30,by30[b.id]||0)});
+  const series=new Map();for(const e of all){if(!e.bpm)continue;const k=e.ex+(e.p?':'+e.p:'');if(!series.has(k))series.set(k,[]);series.get(k).push(e)}
+  const bpmRows=Array.from(series.entries()).map(([k,es])=>{const e0=es[0],piece=e0.p&&S.works.pieces.find(p=>p.id===e0.p);
+    const name=piece?piece.title:(EXM[e0.ex]?EXM[e0.ex].t:e0.ex),vals=es.map(e=>e.bpm);
+    return `<div class="bpmrow"><span>${esc(name)}</span>${spark(vals)||'<span></span>'}<span class="v">${vals.length>1?vals[0]+' → ':''}${vals[vals.length-1]} BPM</span></div>`}).join('');
+  const recent=all.slice(-15).reverse();
+  $('#v-history').innerHTML=`<div class="viewhead"><h2>Vēsture</h2></div>
+  <div class="stats">
+    <div class="stat"><b>${Math.round(wk/60)}</b><span>min šonedēļ</span></div>
+    <div class="stat"><b>${dec(totSec/3600)}</b><span>stundas kopā</span></div>
+    <div class="stat"><b>${st.cur}</b><span>dienu sērija</span></div>
+    <div class="stat"><b>${st.best}</b><span>garākā sērija</span></div>
+  </div>
+  ${all.length?'':'<p class="empty">Vēl nav nevienas sesijas. Pēc pirmā bloka šeit parādīsies kalendārs, laiks pa blokiem un tempu izaugsme.</p>'}
+  <div class="hist-grid stack-v">
+    <div class="stack-v">
+      <div><h3 style="margin-bottom:10px">Pēdējās 12 nedēļas</h3><div class="heat" role="img" aria-label="Minūtes dienā pēdējās 12 nedēļās">${cells}</div>
+        <div class="heat-leg">0 <i></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i> ${g} min un vairāk</div></div>
+      <div><h3 style="margin-bottom:6px">Laiks pa blokiem, 30 dienas</h3>${BLOCKS.map(b=>{const v=by30[b.id]||0;return `<div class="hbar" style="--c:var(--c-${b.id})"><span>${b.n}</span><span class="track">${v?`<i style="width:${(v/(max30||1)*100).toFixed(1)}%"></i>`:''}</span><span class="v">${Math.round(v/60)} min</span></div>`}).join('')}</div>
+    </div>
+    <div class="stack-v">
+      <div><h3 style="margin-bottom:4px">Tīrais temps</h3>${bpmRows||'<p class="empty">Kad tehnikas vai skaņdarba blokā ieraksti tempu, šeit redzēsi, kā tas aug.</p>'}</div>
+      ${recent.length?`<div><h3 style="margin-bottom:4px">Pēdējie ieraksti</h3><div class="tblwrap"><table class="tbl"><thead><tr><th>Diena</th><th>Bloks</th><th>Vingrinājums</th><th class="num">Min</th><th class="num">BPM</th></tr></thead><tbody>
+        ${recent.map(e=>`<tr><td class="day">${shortDate(e.d)}</td><td>${BL[e.b]?BL[e.b].n:esc(e.b)}</td><td>${esc(EXM[e.ex]?EXM[e.ex].t:'')}</td><td class="num">${dec(e.s/60)}</td><td class="num">${e.bpm||''}</td></tr>`).join('')}</tbody></table></div></div>`:''}
+    </div>
+  </div>
+  <div class="card stack-v" style="max-width:640px">
+    <h3>Iestatījumi un dati</h3>
+    <div class="row"><span>Dienas mērķis</span><div class="seg" role="group" aria-label="Dienas mērķis">${[30,45,60,90].map(n=>`<button data-act="goal" data-n="${n}" aria-pressed="${g===n}">${n} min</button>`).join('')}</div></div>
+    <p class="muted" data-sync>${SYNC_TXT[Cloud.status]}</p>
+    <div class="row"><button class="btn" data-act="export">Eksportēt JSON</button><label class="btn" for="impFile">Importēt JSON</label><input id="impFile" type="file" accept="application/json,.json" data-on="import" hidden></div>
+    <textarea id="expOut" class="num" readonly hidden style="width:100%;min-height:120px;border-radius:12px;border:1px solid var(--line);background:var(--sunken);padding:10px;font-size:12px"></textarea>
+  </div>`}
+
+function render(){({today:renderToday,tools:renderTools,path:renderPath,works:renderWorks,history:renderHistory})[TAB]()}
+function go(tab){TAB=tab;UI.del=null;$$('main > section').forEach(s=>s.hidden=s.id!=='v-'+tab);
+  $$('.tabs button').forEach(b=>{if(b.dataset.tab===tab)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+  if(tab!=='tools'&&M.on&&!R.open)mStop();
+  if(!R.open){cfStop();anStop()}
+  if(tab!=='tools')tuStop();
+  render();window.scrollTo(0,0)}
+let toastT=null;
+function toast(msg){const el=$('#toast');el.textContent=msg;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true},3200)}
+
+/* ================= 9. Session ================= */
+const R={open:false,queue:[],qi:0,b:null,ex:null,elapsed:0,target:0,running:false,last:0,chimed:false,int:null,wake:null,clean:null,saved:0,piece:null};
+const fmt=s=>{s=Math.max(0,Math.round(s));return pad(Math.floor(s/60))+':'+pad(s%60)};
+async function reqWake(){try{if('wakeLock' in navigator)R.wake=await navigator.wakeLock.request('screen')}catch(e){}}
+function startSession(blocks){actx();R.queue=blocks;R.qi=0;R.open=true;$('#session').hidden=false;document.body.classList.add('in-session');
+  const th=$('#toolHost');if(th)th.innerHTML='';loadBlock();clearInterval(R.int);R.int=setInterval(tick,250);reqWake()}
+function loadBlock(){const b=R.queue[R.qi],i=BLOCKS.findIndex(x=>x.id===b),tg=targets()[i]*60,done=todayBy()[b]||0;
+  R.b=b;R.ex=exFor(b);R.piece=b==='rep'?activePiece():null;R.target=done<tg-30?tg-done:tg;R.elapsed=0;R.running=true;R.last=Date.now();R.chimed=false;R.clean=null;R.saved=Date.now();
+  if(M.on)mStop();const ex=R.ex,tool=ex.tool;
+  if(tool&&tool.k==='metro'){setBpm(tool.bpm,true);M.beats=tool.beats;S.settings.metro.beats=tool.beats}
+  else if(ex.bpm){const best=bestBpm(ex.id+(R.piece?':'+R.piece.id:''));setBpm(best||(ex.bpm>1?ex.bpm:(R.piece&&R.piece.bpm?Math.round(R.piece.bpm*.65):80)),true)}
+  if(tool&&tool.k==='trainer'){const c=trCfg();c.mode=tool.mode;c.strings=tool.strings.slice();c.acc=!!tool.acc;c.maxFret=12;TR.q=null;TR.score={n:0,ok:0,ms:0,streak:0}}
+  if(tool&&tool.k==='map'){MV.presets=tool.presets;MV.pi=0;mapLoad(tool.presets[0])}
+  if(tool&&tool.k==='circle'){cfStop();CF.md=tool.mode==='maj'?'ion':'aeo';CF.axis=false;CF.k=tool.mode==='maj'?cIdx(tool.root):cIdx((tool.root+3)%12);CF.sel=null;CF.prog=[]}
+  renderSession()}
+function renderSession(){const b=BL[R.b],ex=R.ex,tool=ex.tool,el=$('#session');
+  let extra='';
+  if(R.b==='rep'){extra=R.piece?`<div id="sPiece">${pieceHTML(R.piece,true)}</div>`:`<p class="note">Vēl nav neviena skaņdarba. Šo bloku vari izmantot jebkuram gabalam, ko pašlaik mācies, un pēc tam pievienot to sadaļā Darbi, lai sekotu sadaļām un tempam.</p>`}
+  if(ex.bpm){const best=bestBpm(ex.id+(R.piece?':'+R.piece.id:''));
+    extra+=`<div class="note bpmlog"><div><b>Tīrais temps</b><br><span class="muted">Ātrākais temps, kurā šodien trīs reizes pēc kārtas sanāk bez kļūdām.</span></div>
+      <div class="row"><span class="val" id="sClean">${R.clean?R.clean+' BPM':'—'}</span><button class="btn sm" data-act="s-clean" data-m="bpmbtn">Ierakstīt ${M.bpm} BPM</button></div>
+      ${best?`<span class="muted">Līdzšinējais labākais: ${best} BPM</span>`:''}</div>`}
+  if(R.b==='comp'){extra+=`<div class="stack-v" style="gap:10px"><label class="field">Idejas nosaukums<input id="sIdeaTitle" maxlength="80" autocomplete="off"></label>
+      <label class="field">Piezīmes: tonalitāte, akordi, kas izdevās<textarea id="sIdeaNote" maxlength="600"></textarea></label>
+      <span class="muted" style="font-size:13px">Saglabājas sadaļā Darbi, kad pabeidz bloku.</span></div>`}
+  const last=R.qi>=R.queue.length-1;
+  el.style.setProperty('--c','var(--c-'+R.b+')');
+  el.innerHTML=`<div class="s-inner">
+    <div class="s-top"><span class="chip s-chip"><img src="img/ico-${R.b}.webp" alt="">${b.n}${R.queue.length>1?' · '+(R.qi+1)+' no '+R.queue.length:''}</span><button class="btn sm" data-act="s-close">Aizvērt</button></div>
+    <div class="s-main">
+      <div class="s-timer"><div class="s-time" id="sTime" role="timer">${fmt(R.target)}</div><div class="s-sub" id="sSub">atlicis</div></div>
+      <div class="s-prog"><i id="sBar"></i></div>
+      <div class="s-ctl"><button class="btn" data-act="s-pause" id="sPause">Pauze</button><button class="btn solid" data-act="s-done">${last?'Pabeigt':'Nākamais bloks'}</button></div>
+      <div><h2>${esc(ex.t)}</h2><ol class="how">${ex.how.map(h=>`<li><span>${esc(h)}</span></li>`).join('')}</ol></div>
+      ${extra}
+    </div>
+    <div class="s-side">${tool&&tool.k!=='metro'&&R.b!=='tech'?`<div id="sTool"></div>${metroHTML('sm')}`:`${metroHTML('sm')}<div id="sTool"></div>`}</div>
+  </div>`;
+  const host=$('#sTool');
+  if(tool&&tool.k==='trainer'){TR.host=host;TR.metro=false;trNext()}
+  else if(tool&&tool.k==='map'){MV.host=host;mapRender()}
+  else if(tool&&tool.k==='circle'){CF.host=host;circleRender()}
+  mSync(true);drawTimer();el.scrollTop=0}
+function drawTimer(){const rem=R.target-R.elapsed,t=$('#sTime');if(!t)return;
+  t.textContent=rem>=0?fmt(rem):'+'+fmt(-rem);$('#sSub').textContent=!R.running?'pauze':rem>=0?'atlicis':'virs plāna';
+  $('#sBar').style.width=Math.min(100,R.elapsed/R.target*100).toFixed(1)+'%'}
+function pendingObj(){const e={b:R.b,ex:R.ex.id,s:Math.round(R.elapsed),d:ymd(),t:Date.now()};if(R.piece)e.p=R.piece.id;return e}
+function tick(){if(!R.open)return;const t=Date.now();
+  if(R.running){const dt=t-R.last;if(dt>0&&dt<20*60e3)R.elapsed+=dt/1000;if(!R.chimed&&R.elapsed>=R.target){R.chimed=true;chime()}
+    if(t-R.saved>5000){R.saved=t;lsSet(LSP,pendingObj())}}
+  R.last=t;drawTimer()}
+function commit(){lsDel(LSP);const s=Math.round(R.elapsed);if(s<20)return false;
+  const e=pendingObj();e.id=uid();if(R.clean)e.bpm=R.clean;addLog(e);
+  if(R.b==='comp'){const ti=($('#sIdeaTitle')||{}).value||'',no=($('#sIdeaNote')||{}).value||'';
+    if(ti.trim()||no.trim()){S.works.ideas.unshift({id:uid(),d:ymd(),title:ti.trim().slice(0,80),note:no.trim().slice(0,600),ex:R.ex.id,rec:false});markDirty('works')}}
+  return true}
+function closeSession(){R.open=false;clearInterval(R.int);if(M.on)mStop();try{if(R.wake)R.wake.release()}catch(e){}R.wake=null;
+  cfStop();CF.host=null;$('#session').hidden=true;$('#session').innerHTML='';document.body.classList.remove('in-session');TR.host=null;MV.host=null;TR.q=null;MV.presets=null;render()}
+function finishBlock(advance){const name=BL[R.b].n,ok=commit(),min=Math.round(R.elapsed/60);
+  if(advance&&R.qi<R.queue.length-1){R.qi++;loadBlock();toast(ok?`${name}: pieskaitītas ${min} min`:`${name}: mazāk par 20 s, nav pieskaitīts`);return}
+  closeSession();const tot=Object.values(todayBy()).reduce((a,b)=>a+b,0)/60;
+  toast(!ok?'Mazāk par 20 sekundēm, nav pieskaitīts.':tot>=S.settings.goal?`Šodienas mērķis sasniegts: ${Math.floor(tot)} min`:`${name}: pieskaitītas ${min} min`)}
+
+/* ================= 10. Events ================= */
+const ACT={
+  go:t=>go(t.dataset.tab),
+  'start-all':()=>{const tg=targets(),by=todayBy();let q=BLOCKS.filter((b,i)=>(by[b.id]||0)<tg[i]*60-30).map(b=>b.id);if(!q.length)q=BLOCKS.map(b=>b.id);startSession(q)},
+  start:t=>startSession([t.dataset.b]),
+  swap:t=>{const b=t.dataset.b,p=pool(b),cur=exFor(b);S.settings.picks[b]=p[(p.indexOf(cur)+1)%p.length].id;markDirty('settings');renderToday()},
+  tool:t=>{TOOL=t.dataset.v;lsSet(LSU,{tool:TOOL});if(M.on)mStop();cfStop();anStop();tuStop();renderTools()},
+  'tu-start':()=>{TU.on?tuStop():tuStart()},
+  'tu-str':t=>{const i=+t.dataset.i;TU.lock=TU.lock===i?-1:i;TU.hist=[];tuRender()},
+  'tu-ref':t=>{TU.A4=clamp(TU.A4+(+t.dataset.d),430,450);tuSave();tuRender()},
+  'tu-tone':()=>{const t=TU_TUNINGS[TU.tuning]||TU_TUNINGS.std,m=TU.lock>=0?t[TU.lock]:(TU.target!=null?TU.target:t[0]);pluckAt(m+12*Math.log2(TU.A4/440),0,2.5,0.25)},
+  'cf-tap':t=>{const ring=t.dataset.r,k=+t.dataset.k,K=cfKey();let c=K.chords.find(x=>{const s=segOf(x);return s[0]===ring&&s[1]===k});
+    c=c?withSev(c):(ring==='o'?{pc:CIRC[k],root:CIRC_MAJ[k],q:'maj'}:{pc:(CIRC[k]+9)%12,root:CIRC_MIN[k],q:'min'});cfSelect(ring,k,c)},
+  'cf-chip':t=>{const c0=cfKey().chords[+t.dataset.i];if(!c0)return;const c=withSev(c0),[r,k]=segOf(c);cfSelect(r,k,c)},
+  'cf-mode':t=>cfSetMode(t.dataset.v),
+  'cf-darker':()=>{const i=MODES.findIndex(m=>m.id===CF.md);if(i<6)cfSetMode(MODES[i+1].id)},
+  'cf-brighter':()=>{const i=MODES.findIndex(m=>m.id===CF.md);if(i>0)cfSetMode(MODES[i-1].id)},
+  'cf-axis':t=>{CF.axis=t.dataset.v==='1';circleRender()},
+  'cf-sev':t=>{CF.sev=t.dataset.v==='1';if(CF.sel&&!CF.sel.shape){CF.sel.c=Object.assign({},CF.sel.c,{s7:CF.sev&&!!CF.sel.c.q7});CF.sel.vi=0}circleRender()},
+  'cf-tonic':()=>{const c=CF.sel&&CF.sel.c;if(!c||c.q==='dim')return;CF.md=c.q==='maj'?'ion':'aeo';CF.k=c.q==='maj'?cIdx(c.pc):cIdx((c.pc+3)%12);CF.sel=null;circleRender()},
+  'cf-v':t=>{if(!CF.sel)return;CF.sel.vi=+t.dataset.i;CF.sel.shape=null;strumSel(CF.sel);circleRender()},
+  'cf-strum':()=>{if(CF.sel)strumSel(CF.sel)},
+  'cf-vl':t=>{CF.vl=t.dataset.v==='1';circleRender()},
+  'cf-pchip':t=>{const i=+t.dataset.i,c=CF.prog[i];if(!c)return;const path=CF.vl?vlPath(CF.prog):[];CF.sel=cfSelOf(c,path[i]);strumSel(CF.sel);circleRender()},
+  'cf-add':()=>{if(CF.sel&&CF.prog.length<16){CF.prog.push(CF.sel.c);circleRender()}},
+  'cf-undo':()=>{CF.prog.pop();circleRender()},
+  'cf-clear':()=>{cfStop();CF.prog=[];circleRender()},
+  'cf-play':()=>{if(CF.playing>=0)cfStop();else cfPlay()},
+  'cf-save':()=>{if(!CF.prog.length)return;const K=cfKey(),names=CF.prog.map(cName),rns=CF.prog.map(c=>{const m=K.chords.find(x=>x.pc===c.pc&&x.q===c.q);return m?cRn(Object.assign({},m,{s7:c.s7})):romanOf(c.pc,c.q,K.tonicPc)});
+    S.works.ideas.unshift({id:uid(),d:ymd(),title:'Progresija · '+K.tonic+' '+MODE_BY[CF.md].s,note:names.join(' – ')+' · '+rns.join('–'),rec:false});markDirty('works');toast('Saglabāts sadaļā Darbi.')},
+  'cf-map':()=>{const c=CF.sel&&CF.sel.c;if(!c)return;MV.root=c.pc;MV.kind=c.s7&&c.q7?c.q7:c.q;MV.set=0;MV.presets=null;cfStop();
+    if(R.open){MV.host=$('#sTool');CF.host=null;mapRender()}else{TOOL='map';lsSet(LSU,{tool:TOOL});renderTools()}},
+  'm-step':t=>setBpm(M.bpm+Number(t.dataset.d)),
+  'm-tap':()=>mTap(),
+  'm-toggle':()=>{M.on?mStop():mStart()},
+  'tr-mode':t=>{trCfg().mode=t.dataset.v;markDirty('settings');TR.q=null;trNext()},
+  'tr-str':t=>{const c=trCfg();c.strings[+t.dataset.i]=c.strings[+t.dataset.i]?0:1;markDirty('settings');TR.q=null;trNext()},
+  'tr-fret':t=>{trCfg().maxFret=+t.dataset.v;markDirty('settings');TR.q=null;trNext()},
+  'tr-acc':()=>{trCfg().acc=!trCfg().acc;markDirty('settings');TR.q=null;trNext()},
+  'tr-pick':t=>{if(TR.q&&TR.q.cell)trAnswer(+t.dataset.pc===TR.q.pc)},
+  'tr-hit':t=>{const q=TR.q;if(!q||!q.cell)return;const s=+t.dataset.s,f=+t.dataset.f;trAnswer(s===q.cell.s&&(TUNE[s]+f)%12===q.pc,{s,f})},
+  'tr-show':()=>{TR.show=!TR.show;trRender()},
+  'tr-skip':()=>trNext(),
+  'map-hit':t=>pluck(TUNE[+t.dataset.s]+(+t.dataset.f)),
+  'map-lab':t=>{MV.lab=t.dataset.v;mapRender()},
+  'map-cmp':()=>{MV.cmp=!MV.cmp;mapRender()},
+  'an-hit':t=>{const s2=+t.dataset.s,f=+t.dataset.f;AN.fr[s2]=AN.fr[s2]===f?-1:f;AN.pick=0;pluck(TUNE[s2]+f);anRender()},
+  'an-add':()=>{const id=identify(AN.fr);if(!id||!id.cands.length||AN.prog.length>=16)return;const c=id.cands[Math.min(AN.pick,id.cands.length-1)];
+    AN.prog.push({fr:AN.fr.slice(),name:c.name,root:c.root,q:sfxQ(c.sfx),pcs:id.pcs.slice()});anRender()},
+  'an-load':t=>{const c=AN.prog[+t.dataset.i];if(!c)return;AN.fr=c.fr.slice();AN.pick=0;strumFrets(c.fr);anRender()},
+  'an-undo':()=>{AN.prog.pop();anRender()},
+  'an-pclear':()=>{anStop();AN.prog=[];anRender()},
+  'an-play':()=>{if(AN.playing>=0)anStop();else anPlay()},
+  'an-psave':()=>{if(!AN.prog.length)return;const b=analyzeProg(AN.prog)[0];
+    S.works.ideas.unshift({id:uid(),d:ymd(),title:'Progresija '+b.name,note:AN.prog.map(c=>c.name).join(' – ')+' · '+b.items.map(x=>x.rn).join('–')+' · tvērieni: '+AN.prog.map(c=>frStr(c.fr)).join(' / '),rec:false});markDirty('works');toast('Saglabāts sadaļā Darbi.')},
+  'an-clear':()=>{AN.fr=[-1,-1,-1,-1,-1,-1];AN.pick=0;anRender()},
+  'an-strum':()=>strumFrets(AN.fr),
+  'an-pick':t=>{AN.pick=+t.dataset.i;anRender()},
+  'an-lab':t=>{AN.lab=t.dataset.v;anRender()},
+  'an-save':()=>{const id=identify(AN.fr);if(!id||!id.cands.length)return;const c=id.cands[Math.min(AN.pick,id.cands.length-1)];
+    S.works.ideas.unshift({id:uid(),d:ymd(),title:c.name,note:'Tvēriens: '+frStr(AN.fr)+' · notis: '+c.notes.filter(n=>id.pcs.includes(n.pc)).map(n=>n.name+' ('+n.deg+')').join(', '),rec:false});markDirty('works');toast('Saglabāts sadaļā Darbi.')},
+  'map-vo':t=>{MV.vo=t.dataset.v==='1';MV.gi=0;mapRender()},
+  'map-grip':t=>{MV.gi=+t.dataset.i;const g=grips(MV.root,MV.kind)[MV.gi];if(g)strumFrets(g.fr);mapRender()},
+  'map-strum':()=>{const g=grips(MV.root,MV.kind)[MV.gi];if(g)strumFrets(g.fr)},
+  'map-preset':t=>{MV.pi=+t.dataset.i;mapLoad(MV.presets[MV.pi]);mapRender()},
+  stage:t=>{S.settings.stage=+t.dataset.n;S.settings.picks={};markDirty('settings');renderPath();toast('Aktīvais posms: '+STAGES[S.settings.stage-1].t)},
+  goal:t=>{S.settings.goal=+t.dataset.n;markDirty('settings');renderHistory()},
+  sec:t=>{const p=S.works.pieces.find(x=>x.id===t.dataset.id);if(!p)return;const s=p.sections[+t.dataset.i];s.st=(s.st+1)%4;markDirty('works');
+    if(R.open){const h=$('#sPiece');if(h)h.innerHTML=pieceHTML(p,true)}else renderWorks()},
+  'piece-active':t=>{S.works.pieces.forEach(p=>p.active=p.id===t.dataset.id);markDirty('works');renderWorks()},
+  'piece-del':t=>{if(UI.del!==t.dataset.id){UI.del=t.dataset.id;return renderWorks()}S.works.pieces=S.works.pieces.filter(p=>p.id!==t.dataset.id);UI.del=null;markDirty('works');renderWorks()},
+  'idea-rec':t=>{const x=S.works.ideas.find(i=>i.id===t.dataset.id);if(x){x.rec=!x.rec;markDirty('works');renderWorks()}},
+  'idea-del':t=>{if(UI.del!==t.dataset.id){UI.del=t.dataset.id;return renderWorks()}S.works.ideas=S.works.ideas.filter(i=>i.id!==t.dataset.id);UI.del=null;markDirty('works');renderWorks()},
+  's-pause':t=>{R.running=!R.running;R.last=Date.now();t.textContent=R.running?'Pauze':'Turpināt';drawTimer()},
+  's-done':()=>finishBlock(true),
+  's-close':()=>finishBlock(false),
+  's-clean':()=>{R.clean=M.bpm;const el=$('#sClean');if(el)el.textContent=R.clean+' BPM'},
+  export:async()=>{const data=JSON.stringify({app:'gitaras-stunda',v:1,exported:new Date().toISOString(),settings:S.settings,works:S.works,logs:S.logs},null,1);
+    let dl=null;try{dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null}catch(e){}
+    if(dl){try{await dl.save({filename:'gitaras-stunda-'+ymd()+'.json',data});toast('Fails saglabāts.');return}catch(e){if(e&&e.code==='declined')return}}
+    try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download='gitaras-stunda-'+ymd()+'.json';
+      document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);toast('Fails lejupielādēts.');return}catch(e){}
+    const out=$('#expOut');out.hidden=false;out.value=data;out.focus();out.select();
+    try{await navigator.clipboard.writeText(data);toast('Dati nokopēti starpliktuvē.')}catch(e){toast('Nokopē tekstu no lauka zemāk.')}}
+};
+document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||t.disabled)return;const fn=ACT[t.dataset.act];if(fn)fn(t,e)});
+const ON={
+  'm-range':t=>setBpm(+t.value),
+  'm-beats':t=>setBeats(+t.value),
+  'tu-tuning':t=>{TU.tuning=t.value;TU.lock=-1;TU.hist=[];tuSave();tuRender()},
+  'an-fr':t=>{const fr=parseFr(t.value);if(!fr){toast('Ieraksti 6 vērtības, piemēram x32010 vai x 10 12 11 12 x.');return}AN.fr=fr;AN.pick=0;strumFrets(fr);setTimeout(anRender,0)},
+  'map-root':t=>{MV.root=+t.value;MV.gi=0;mapRender()},
+  'map-kind':t=>{MV.kind=t.value;MV.gi=0;mapRender()},
+  'map-set':t=>{MV.set=+t.value;mapRender()},
+  check:t=>{if(t.checked)S.settings.checks[t.dataset.k]=1;else delete S.settings.checks[t.dataset.k];markDirty('settings');renderPath()},
+  import:t=>{const f=t.files&&t.files[0];if(!f)return;const r=new FileReader();
+    r.onload=()=>{try{const v=JSON.parse(r.result);if(!v||typeof v.logs!=='object')throw 0;let n=0;
+        for(const m of Object.keys(v.logs)){if(!/^\d{4}-\d{2}$/.test(m)||!Array.isArray(v.logs[m]))continue;const a=mergeLog(m,v.logs[m]);if(a){n+=a;markDirty('log-'+m)}}
+        if(v.settings&&(v.settings.updatedAt||0)>(S.settings.updatedAt||0)){S.settings=normSettings(v.settings);markDirty('settings')}
+        if(v.works&&(v.works.updatedAt||0)>(S.works.updatedAt||0)){S.works=normWorks(v.works);markDirty('works')}
+        saveLocal();M.bpm=S.settings.metro.bpm;M.beats=S.settings.metro.beats;M.vol=S.settings.metro.vol;render();toast('Importēts: '+n+' jauni ieraksti.')}
+      catch(e){toast('Šis fails nav Ģitāras stundas eksports.')}};
+    r.readAsText(f);t.value=''}
+};
+document.addEventListener('input',e=>{const t=e.target;if(!t.dataset)return;if(t.dataset.on==='m-range')ON['m-range'](t);else if(t.dataset.on==='m-vol')setVol(+t.value)});
+document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.dataset.on)return;if(t.dataset.on==='m-vol'){setVol(+t.value);volPreview();return}if(t.dataset.on!=='m-range'&&ON[t.dataset.on])ON[t.dataset.on](t)});
+document.addEventListener('submit',e=>{const f=e.target.closest('[data-form]');if(!f)return;e.preventDefault();
+  if(f.dataset.form==='piece'){const title=$('#pTitle').value.trim();if(!title)return;
+    const secs=$('#pSecs').value.split(',').map(s=>s.trim()).filter(Boolean).slice(0,12).map(n=>({n:n.slice(0,30),st:0}));
+    S.works.pieces.push({id:uid(),title:title.slice(0,80),artist:$('#pArtist').value.trim().slice(0,60),bpm:clamp(+$('#pBpm').value||0,0,300),sections:secs.length?secs:[{n:'Viss skaņdarbs',st:0}],active:!S.works.pieces.length,added:ymd()});
+    markDirty('works');renderWorks();toast('Skaņdarbs pievienots.')}
+  else{const title=$('#iTitle').value.trim();if(!title)return;
+    S.works.ideas.unshift({id:uid(),d:ymd(),title:title.slice(0,80),note:$('#iNote').value.trim().slice(0,600),rec:false});markDirty('works');renderWorks();toast('Ideja pievienota.')}});
+const KD={el:null,y:0,x:0,v:0};
+document.addEventListener('pointerdown',e=>{const k=e.target.closest('[data-knob]');if(!k)return;e.preventDefault();KD.el=k;KD.y=e.clientY;KD.x=e.clientX;KD.v=M.bpm;try{k.setPointerCapture(e.pointerId)}catch(_){}k.focus({preventScroll:true})});
+document.addEventListener('pointermove',e=>{if(!KD.el)return;setBpm(KD.v+((KD.y-e.clientY)+(e.clientX-KD.x)*0.6)/2.2,true)});
+const kEnd=()=>{if(KD.el){KD.el=null;markDirty('settings')}};
+document.addEventListener('pointerup',kEnd);document.addEventListener('pointercancel',kEnd);
+document.addEventListener('wheel',e=>{const k=e.target.closest('[data-knob]');if(!k)return;e.preventDefault();setBpm(M.bpm+(e.deltaY<0?1:-1))},{passive:false});
+document.addEventListener('keydown',e=>{if(!e.target.closest||!e.target.closest('[data-knob]'))return;const d={ArrowUp:1,ArrowRight:1,ArrowDown:-1,ArrowLeft:-1,PageUp:5,PageDown:-5}[e.key];if(d){e.preventDefault();setBpm(M.bpm+d)}});
+document.addEventListener('visibilitychange',()=>{if(!R.open)return;if(document.visibilityState==='visible')reqWake();else if(R.elapsed>=20)lsSet(LSP,pendingObj())});
+window.addEventListener('pagehide',()=>{if(R.open&&R.elapsed>=20)lsSet(LSP,pendingObj())});
+
+/* ================= 11. Boot ================= */
+loadLocal();
+M.bpm=S.settings.metro.bpm;M.beats=S.settings.metro.beats;M.vol=S.settings.metro.vol;
+(function(){const p=lsGet(LSP);if(p&&p.s>=20&&p.b&&p.d){p.id=uid();addLog(p)}lsDel(LSP)})();
+if(location.hash==='#tuner'){TOOL='tuner';TAB='tools'}
+go(TAB);
+cloudInit();
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+})();
 </script>
+
 </body>
 </html>
