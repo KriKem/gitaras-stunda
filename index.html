@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="lv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0C0907">
+<title>Ģitāras skaņotājs</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,600;7..72,700&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0C0907; --panel:#17110D; --raised:#211913; --well:#100B08; --line:#33281F; --ink:#F2E4CF; --muted:#A8937D; --on-ink:#170F08;
+  --brass:#E2A64F; --brass-hi:#F6CF86; --brass-lo:#A86F25; --glow:rgb(255 168 72 / .45); --good:#6CE09A; --good-glow:rgb(108 224 154 / .55); --blue:#7FA4FF;
+  --f-display:'Literata',Georgia,serif; --f-body:'Instrument Sans','Segoe UI',system-ui,sans-serif; --f-mono:'DM Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--f-body);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgb(12 9 7 / .72),rgb(12 9 7 / .93) 55%,rgb(12 9 7 / .98)),url(tubes.webp) center 30%/cover no-repeat}
+button,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.app{max-width:560px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:18px}
+header{display:flex;align-items:center;gap:11px}
+header img{width:34px;height:34px;border-radius:9px}
+header h1{margin:0;font:600 21px/1 var(--f-display)}
+.card{background:linear-gradient(180deg,#1E1712,#140F0B);border:1px solid var(--line);border-radius:22px;padding:18px}
+.readout{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.note{font:700 112px/1 var(--f-display);color:var(--brass-hi);text-shadow:0 0 30px var(--glow);letter-spacing:-.03em;min-height:112px;transition:opacity .3s}
+.note sub{font-size:30px;color:var(--muted);text-shadow:none;margin-left:4px;vertical-align:baseline}
+.note.idle{opacity:.35}
+.hz{font:500 14px/1 var(--f-mono);color:var(--muted)}
+.meter{width:100%;display:block}
+.meter .tick{stroke:var(--muted);stroke-width:1.5;opacity:.7}
+.meter .tick.major{stroke-width:2.2;opacity:1}
+.meter text{fill:var(--muted);font:500 11px var(--f-mono);text-anchor:middle}
+.needle{transform-origin:160px 168px;transition:transform .12s linear}
+.needle line{stroke:var(--brass-hi);stroke-width:3;stroke-linecap:round;filter:drop-shadow(0 0 4px var(--glow))}
+.state{display:flex;align-items:center;justify-content:center;gap:12px;min-height:36px}
+.lamp{width:18px;height:18px;border-radius:50%;background:#2A1E14;border:1px solid #3A2C20;transition:background .2s,box-shadow .2s}
+.lamp.on{background:radial-gradient(circle at 50% 40%,#E6FFEF,var(--good) 58%,#1E7A47);border-color:var(--good);box-shadow:0 0 14px 4px var(--good-glow)}
+.cents{font:500 24px/1 var(--f-mono);min-width:96px;text-align:center}
+.hint{font-weight:600;color:var(--muted);min-width:120px}
+.hint.ok{color:var(--good)}
+.strings{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.strings button{border:1px solid var(--line);background:var(--raised);border-radius:12px;padding:8px 0;display:flex;flex-direction:column;align-items:center;gap:2px;font:600 18px/1.1 var(--f-display)}
+.strings button small{font:500 10px/1 var(--f-mono);color:var(--muted)}
+.strings button.near{border-color:var(--brass);box-shadow:0 0 12px -3px var(--glow)}
+.strings button[aria-pressed="true"]{background:linear-gradient(180deg,var(--brass-hi),var(--brass-lo));color:var(--on-ink);border-color:var(--brass-lo)}
+.strings button[aria-pressed="true"] small{color:var(--on-ink)}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.spread{justify-content:space-between}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--raised);font-weight:600;font-size:14px}
+.btn.solid{background:linear-gradient(180deg,var(--brass-hi),var(--brass) 48%,var(--brass-lo));color:var(--on-ink);border-color:var(--brass-lo);box-shadow:0 8px 24px -10px var(--glow)}
+.btn.lg{min-height:54px;width:100%;font-size:16px}
+select{background:var(--well);border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:14px}
+.ref{display:flex;align-items:center;gap:6px;font:500 13px var(--f-mono);color:var(--muted)}
+.ref button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--raised);font:500 14px var(--f-mono)}
+.level{height:4px;border-radius:2px;background:var(--well);overflow:hidden}
+.level i{display:block;height:100%;width:0;background:var(--brass);transition:width .08s}
+.muted{color:var(--muted);font-size:13px;margin:0}
+.err{color:#F07A62;font-size:14px;margin:0}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){.needle,.lamp,.level i,.note{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header><img src="icon-192.png" alt=""><h1>Ģitāras skaņotājs</h1></header>
+
+  <div class="card readout">
+    <div class="note idle" id="note" aria-live="polite">–</div>
+    <div class="hz" id="hz">&nbsp;</div>
+    <svg class="meter" viewBox="0 0 320 190" aria-hidden="true" id="meter"></svg>
+    <div class="state"><span class="lamp" id="lamp"></span><span class="cents" id="cents">&nbsp;</span><span class="hint" id="hint">&nbsp;</span></div>
+    <div class="level" style="width:100%" title="Mikrofona līmenis"><i id="level"></i></div>
+  </div>
+
+  <button class="btn solid lg" id="start">Sākt skaņošanu</button>
+  <p class="err" id="err" hidden></p>
+
+  <div class="card" style="display:flex;flex-direction:column;gap:14px">
+    <div class="row spread">
+      <select id="tuning" aria-label="Skaņojums">
+        <option value="std">Standarts · E A D G B E</option>
+        <option value="dropd">Drop D · D A D G B E</option>
+        <option value="eb">Pustoni zemāk · E♭ A♭ D♭ G♭ B♭ E♭</option>
+        <option value="dstd">D standarts · D G C F A D</option>
+        <option value="chrom">Hromatisks · jebkura nots</option>
+      </select>
+      <div class="ref"><button id="refDown" aria-label="Atskaites A zemāk">−</button><span id="refVal">A = 440 Hz</span><button id="refUp" aria-label="Atskaites A augstāk">+</button></div>
+    </div>
+    <div class="strings" id="strings"></div>
+    <p class="muted" id="modeTxt">Automātiski: lietotne pati atrod tuvāko stīgu. Pieskaries stīgai, lai skaņotu tieši uz to, vēlreiz, lai atgrieztos automātiskajā režīmā.</p>
+    <div class="row"><button class="btn" id="refTone">Atskaņot atskaites toni</button></div>
+  </div>
+
+  <p class="muted">Labākam rezultātam: kluss fons, telefons tuvu ģitārai, viena stīga reizē. Lasījums nostabilizējas pusotras sekundes laikā pēc uzsitiena.</p>
+</div>
+
+<script>
+'use strict';
+/* ---------- pitch detection: YIN, then a second pass after low-pass (removes string inharmonicity bias) ---------- */
+function yin(buf,sr,minF,maxF){
+  const N=buf.length,W=N>>1,tMin=Math.max(2,Math.floor(sr/maxF)),tMax=Math.min(W-2,Math.ceil(sr/minF));
+  let rms=0;for(let i=0;i<N;i++)rms+=buf[i]*buf[i];rms=Math.sqrt(rms/N);if(rms<0.004)return null;
+  const d=new Float32Array(tMax+2);
+  for(let t=1;t<=tMax+1;t++){let s=0;for(let i=0;i<W;i++){const x=buf[i]-buf[i+t];s+=x*x}d[t]=s}
+  const c=new Float32Array(tMax+2);c[0]=1;let run=0;
+  for(let t=1;t<=tMax+1;t++){run+=d[t];c[t]=run>0?d[t]*t/run:1}
+  let tau=-1;
+  for(let t=tMin;t<=tMax;t++){if(c[t]<0.15){while(t+1<=tMax&&c[t+1]<c[t])t++;tau=t;break}}
+  if(tau<0){let m=1e9;for(let t=tMin;t<=tMax;t++)if(c[t]<m){m=c[t];tau=t}if(m>0.4)return null}
+  const s0=c[tau-1],s1=c[tau],s2=c[tau+1],den=s0-2*s1+s2;
+  return {f:sr/(den?tau+(s0-s2)/(2*den):tau),conf:1-s1,rms}}
+function lowpass(buf,sr,fc){const w=2*Math.PI*fc/sr,al=Math.sin(w)/(2*0.7071),cs=Math.cos(w),a0=1+al;
+  const b0=(1-cs)/2/a0,b1=(1-cs)/a0,b2=b0,a1=-2*cs/a0,a2=(1-al)/a0,out=new Float32Array(buf.length);
+  let x1=0,x2=0,y1=0,y2=0;for(let i=0;i<buf.length;i++){const x=buf[i],y=b0*x+b1*x1+b2*x2-a1*y1-a2*y2;x2=x1;x1=x;y2=y1;y1=y;out[i]=y}return out}
+function detectPitch(buf,sr){const p=yin(buf,sr,55,1400);if(!p)return null;
+  const fc=Math.min(sr/4,p.f*2.5),lp=lowpass(lowpass(buf,sr,fc),sr,fc),q=yin(lp.subarray(256),sr,p.f/1.3,p.f*1.3);
+  return q&&Math.abs(1200*Math.log2(q.f/p.f))<80?{f:q.f,conf:p.conf,rms:p.rms}:p}
+
+/* ---------- music ---------- */
+const NAMES=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+const TUNINGS={std:[40,45,50,55,59,64],dropd:[38,45,50,55,59,64],eb:[39,44,49,54,58,63],dstd:[38,43,48,53,57,62],chrom:null};
+let A4=440,tuning='std',lock=-1;
+const midiF=m=>A4*Math.pow(2,(m-69)/12);
+const nm=m=>NAMES[((m%12)+12)%12],oct=m=>Math.floor(m/12)-1;
+
+/* ---------- meter ---------- */
+const CX=160,CY=168,R=140;
+(function drawMeter(){let s='';
+  const pt=(a,r)=>{const t=(a-90)*Math.PI/180;return [(CX+r*Math.cos(t)).toFixed(1),(CY+r*Math.sin(t)).toFixed(1)]};
+  const arc=(a0,a1,r)=>{const [x0,y0]=pt(a0,r),[x1,y1]=pt(a1,r);return `M${x0} ${y0}A${r} ${r} 0 0 1 ${x1} ${y1}`};
+  s+=`<path d="${arc(-60,60,R)}" fill="none" stroke="var(--line)" stroke-width="2"/>`;
+  s+=`<path d="${arc(-3.6,3.6,R-8)}" fill="none" stroke="var(--good)" stroke-width="10" opacity=".35"/>`;
+  for(let c=-50;c<=50;c+=5){const a=c*1.2,maj=c%25===0,[x0,y0]=pt(a,R-(maj?16:9)),[x1,y1]=pt(a,R);s+=`<line class="tick${maj?' major':''}" x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}"/>`;
+    if(maj){const [tx,ty]=pt(a,R-30);s+=`<text x="${tx}" y="${(+ty+4).toFixed(1)}">${c>0?'+'+c:c}</text>`}}
+  const [fx,fy]=pt(-55,R-52),[sx,sy]=pt(55,R-52);
+  s+=`<text x="${fx}" y="${fy}" style="font-size:12px">♭</text><text x="${sx}" y="${sy}" style="font-size:12px">♯</text>`;
+  s+=`<g class="needle" id="needle"><line x1="${CX}" y1="${CY}" x2="${CX}" y2="${CY-R+6}"/></g><circle cx="${CX}" cy="${CY}" r="9" fill="var(--brass-lo)" stroke="var(--brass-hi)" stroke-width="1.5"/>`;
+  document.getElementById('meter').innerHTML=s})();
+
+/* ---------- UI ---------- */
+const $=id=>document.getElementById(id);
+function renderStrings(){const t=TUNINGS[tuning],el=$('strings');
+  if(!t){el.innerHTML='';$('modeTxt').textContent='Hromatisks režīms: rāda tuvāko noti jebkurai skaņai.';return}
+  el.innerHTML=t.map((m,i)=>`<button data-i="${i}" aria-pressed="${lock===i}"><span>${nm(m)}</span><small>${6-i}. st.</small></button>`).join('');
+  $('modeTxt').textContent=lock<0?'Automātiski: lietotne pati atrod tuvāko stīgu. Pieskaries stīgai, lai skaņotu tieši uz to.':`Skaņo ${6-lock}. stīgu uz ${nm(t[lock])}${oct(t[lock])}. Pieskaries vēlreiz, lai atgrieztos automātiskajā režīmā.`}
+$('strings').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const i=+b.dataset.i;lock=lock===i?-1:i;hist=[];renderStrings()});
+$('tuning').addEventListener('change',e=>{tuning=e.target.value;lock=-1;hist=[];renderStrings();save()});
+function setRef(v){A4=Math.max(430,Math.min(450,v));$('refVal').textContent='A = '+A4+' Hz';save()}
+$('refDown').onclick=()=>setRef(A4-1);$('refUp').onclick=()=>setRef(A4+1);
+function save(){try{localStorage.setItem('tuner',JSON.stringify({A4,tuning}))}catch(e){}}
+try{const v=JSON.parse(localStorage.getItem('tuner')||'{}');if(v.A4)A4=v.A4;if(v.tuning&&v.tuning in TUNINGS)tuning=v.tuning}catch(e){}
+$('tuning').value=tuning;setRef(A4);renderStrings();
+
+/* ---------- audio ---------- */
+let ctx=null,an=null,buf=null,stream=null,timer=null,wake=null,hist=[],shown=0,lastGood=0,inTuneSince=0;
+async function start(){$('err').hidden=true;
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){showErr('Šis pārlūks neatļauj mikrofonu. Atver lapu caur https:// adresi Chrome pārlūkā.');return}
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}})}
+  catch(e){showErr(e&&e.name==='NotAllowedError'?'Mikrofona atļauja liegta. Atļauj to pārlūka adreses joslas iestatījumos un mēģini vēlreiz.':'Mikrofonu neizdevās atvērt: '+(e&&e.message||e));return}
+  ctx=new (window.AudioContext||window.webkitAudioContext)();const src=ctx.createMediaStreamSource(stream);
+  an=ctx.createAnalyser();an.fftSize=4096;src.connect(an);buf=new Float32Array(an.fftSize);
+  timer=setInterval(tick,60);requestAnimationFrame(draw);
+  try{if('wakeLock' in navigator)wake=await navigator.wakeLock.request('screen')}catch(e){}
+  $('start').textContent='Apturēt';$('start').classList.remove('solid')}
+function stop(){clearInterval(timer);timer=null;try{stream&&stream.getTracks().forEach(t=>t.stop())}catch(e){}try{ctx&&ctx.close()}catch(e){}ctx=null;an=null;
+  try{wake&&wake.release()}catch(e){}wake=null;$('start').textContent='Sākt skaņošanu';$('start').classList.add('solid');$('note').classList.add('idle');$('lamp').classList.remove('on');$('level').style.width='0'}
+function showErr(t){$('err').textContent=t;$('err').hidden=false}
+$('start').onclick=()=>{timer?stop():start()};
+document.addEventListener('visibilitychange',async()=>{if(document.visibilityState==='visible'&&timer){try{if('wakeLock' in navigator)wake=await navigator.wakeLock.request('screen')}catch(e){}}});
+
+let target=null,cents=0;
+function tick(){if(!an)return;an.getFloatTimeDomainData(buf);
+  const p=detectPitch(buf,ctx.sampleRate),now=performance.now();
+  $('level').style.width=Math.min(100,(p?p.rms:rms(buf))*900).toFixed(0)+'%';
+  if(!p||p.conf<0.8){if(now-lastGood>1500){$('note').classList.add('idle');$('lamp').classList.remove('on');$('hint').textContent=' ';$('hint').className='hint';inTuneSince=0}return}
+  lastGood=now;const midi=69+12*Math.log2(p.f/A4),t=TUNINGS[tuning];
+  let tm;if(!t)tm=Math.round(midi);else if(lock>=0)tm=t[lock];else{tm=t.reduce((a,b)=>Math.abs(b-midi)<Math.abs(a-midi)?b:a);if(Math.abs(midi-tm)>1.5)tm=Math.round(midi)}
+  if(target!==tm){target=tm;hist=[]}
+  hist.push(p.f);if(hist.length>7)hist.shift();
+  const fm=[...hist].sort((a,b)=>a-b)[hist.length>>1];cents=1200*Math.log2(fm/midiF(tm));
+  $('note').innerHTML=`${nm(tm)}<sub>${oct(tm)}</sub>`;$('note').classList.remove('idle');
+  $('hz').textContent=fm.toFixed(2)+' Hz · mērķis '+midiF(tm).toFixed(2)+' Hz';
+  const ac=Math.abs(cents),near=ac<=3;
+  $('cents').textContent=(Math.abs(cents)>=99.5?(cents>0?'+':'−')+Math.round(Math.abs(cents)/100)+' pust.':(cents>=0?'+':'−')+Math.abs(cents).toFixed(1).replace('.',',')+' c');
+  if(near){if(!inTuneSince)inTuneSince=now}else inTuneSince=0;
+  const locked=near&&now-inTuneSince>350;
+  $('lamp').classList.toggle('on',locked);
+  $('hint').textContent=locked?'Noskaņots':near?'Gandrīz':cents<0?'Pievelc ↑':'Atlaid ↓';
+  $('hint').className='hint'+(locked?' ok':'');
+  if(t)[...$('strings').children].forEach((b,i)=>b.classList.toggle('near',t[i]===tm))}
+function rms(b){let s=0;for(let i=0;i<b.length;i++)s+=b[i]*b[i];return Math.sqrt(s/b.length)}
+function draw(){if(!an)return;shown+=(Math.max(-50,Math.min(50,cents))-shown)*0.35;
+  $('needle').style.transform=`rotate(${(shown*1.2).toFixed(2)}deg)`;requestAnimationFrame(draw)}
+
+/* reference tone: plucked string at the selected (or nearest) string's pitch */
+$('refTone').onclick=()=>{const t=TUNINGS[tuning]||TUNINGS.std,m=lock>=0?t[lock]:(target!=null?target:t[0]);
+  const c=ctx||new (window.AudioContext||window.webkitAudioContext)(),tt=c.currentTime,f=midiF(m),g=c.createGain(),lp=c.createBiquadFilter(),o=c.createOscillator();
+  o.type='sawtooth';o.frequency.value=f;lp.type='lowpass';lp.frequency.setValueAtTime(f*6,tt);lp.frequency.exponentialRampToValueAtTime(f*1.5,tt+1.5);
+  g.gain.setValueAtTime(0.0001,tt);g.gain.exponentialRampToValueAtTime(0.25,tt+0.01);g.gain.exponentialRampToValueAtTime(0.0001,tt+2.5);
+  o.connect(lp);lp.connect(g);g.connect(c.destination);o.start(tt);o.stop(tt+2.6)};
+
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>

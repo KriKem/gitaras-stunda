@@ -1,0 +1,17 @@
+{
+  "name": "Ģitāras stunda",
+  "short_name": "Ģitāra",
+  "description": "Ģitāras skaņotājs un treniņu lietotne",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0C0907",
+  "theme_color": "#0C0907",
+  "lang": "lv",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
